@@ -1,6 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-type AuthResponse = {
+export type AuthResponse = {
   user: {
     id: string;
     email: string;
@@ -19,7 +19,7 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    let message = "Erro inesperado";
+    let message = "Unexpected error";
     try {
       const body = (await response.json()) as { message?: string };
       if (body.message) {

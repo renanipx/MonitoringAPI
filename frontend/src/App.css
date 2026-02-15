@@ -3,33 +3,65 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 1.5rem;
+  background: radial-gradient(circle at top left, #1e293b, transparent 55%),
+    radial-gradient(circle at bottom right, #0f766e, transparent 55%),
+    #020617;
 }
 
 .card {
   width: 100%;
-  max-width: 400px;
-  padding: 2rem;
-  border-radius: 0.75rem;
-  background: #1a1a1a;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  max-width: 420px;
+  padding: 2.25rem 2.5rem;
+  border-radius: 1rem;
+  background: linear-gradient(145deg, #020617, #020617) padding-box,
+    linear-gradient(145deg, rgba(56, 189, 248, 0.5), rgba(34, 197, 94, 0.4))
+      border-box;
+  border: 1px solid transparent;
+  box-shadow: 0 22px 45px rgba(15, 23, 42, 0.9);
 }
 
 .card h1 {
-  margin-bottom: 1.5rem;
+  margin: 0;
+  margin-bottom: 0.4rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #f9fafb;
+  text-align: center;
+}
+
+.card-subtitle {
+  margin: 0;
+  margin-bottom: 1.8rem;
+  font-size: 0.95rem;
+  color: #9ca3af;
+  text-align: center;
 }
 
 .tabs {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(31, 41, 55, 0.9);
+  margin-bottom: 1.75rem;
 }
 
 .tabs button {
   flex: 1;
+  padding: 0.55rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  background: transparent;
+  color: #9ca3af;
+  border: none;
 }
 
 .tabs .active {
-  background: #646cff;
+  background: linear-gradient(135deg, #38bdf8, #22c55e);
+  color: #f9fafb;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9),
+    0 10px 20px rgba(8, 47, 73, 0.7);
 }
 
 .form {
@@ -43,25 +75,47 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0.25rem;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  color: #9ca3af;
 }
 
 .form input {
   width: 100%;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  border: 1px solid #333;
-  background: #0f0f0f;
-  color: inherit;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid #1f2937;
+  background: rgba(15, 23, 42, 0.9);
+  color: #e5e7eb;
+  font-size: 0.9rem;
 }
 
 .form input:focus {
   outline: none;
-  border-color: #646cff;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3);
 }
 
 .error {
-  color: #ff6b6b;
+  color: #f97373;
   font-size: 0.85rem;
   text-align: left;
+}
+
+.form button[type="submit"] {
+  margin-top: 0.5rem;
+  width: 100%;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border-radius: 999px;
+  border: none;
+  color: #022c22;
+  font-weight: 600;
+}
+
+.form button[type="submit"]:hover {
+  background: linear-gradient(135deg, #22c55e, #15803d);
+}
+
+.form button[type="submit"]:disabled {
+  opacity: 0.7;
+  cursor: default;
 }
