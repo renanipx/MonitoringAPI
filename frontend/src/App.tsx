@@ -1,24 +1,32 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { type AuthResponse } from "./lib/api";
+import { type User, type AuthResponse, currentUser, logout } from "./lib/api";
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 
-type AuthUser = AuthResponse["user"];
+type AuthUser = User;
 
 function App() {
   const [user, setUser] = useState<AuthUser | null>(null);
 
   function handleAuthSuccess(data: AuthResponse) {
     setUser(data.user);
-    window.localStorage.setItem("token", data.token);
   }
 
   function handleLogout() {
-    setUser(null);
-    window.localStorage.removeItem("token");
+    logout()
+      .catch(() => {})
+      .finally(() => setUser(null));
   }
+
+  useEffect(() => {
+    currentUser()
+      .then((res) => setUser(res.user))
+      .catch(() => {
+        setUser(null);
+      });
+  }, []);
 
   return (
     <BrowserRouter>
