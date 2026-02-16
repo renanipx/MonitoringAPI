@@ -14,7 +14,7 @@ router.post("/register", async (req: Request, res: Response) => {
     };
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Email e senha são obrigatórios" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
     const existingUser = await pool.query(
@@ -23,7 +23,7 @@ router.post("/register", async (req: Request, res: Response) => {
     );
 
     if (existingUser.rowCount && existingUser.rowCount > 0) {
-      return res.status(409).json({ message: "Email já cadastrado" });
+      return res.status(409).json({ message: "Email already registered" });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -52,7 +52,7 @@ router.post("/register", async (req: Request, res: Response) => {
       token,
     });
   } catch (error) {
-    return res.status(500).json({ message: "Erro ao registrar usuário" });
+    return res.status(500).json({ message: "Failed to register user" });
   }
 });
 
@@ -64,7 +64,7 @@ router.post("/login", async (req: Request, res: Response) => {
     };
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Email e senha são obrigatórios" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
     const result = await pool.query(
@@ -73,7 +73,7 @@ router.post("/login", async (req: Request, res: Response) => {
     );
 
     if (!result.rowCount || result.rowCount === 0) {
-      return res.status(401).json({ message: "Credenciais inválidas" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     const user = result.rows[0] as {
@@ -85,7 +85,7 @@ router.post("/login", async (req: Request, res: Response) => {
     const validPassword = await bcrypt.compare(password, user.password_hash);
 
     if (!validPassword) {
-      return res.status(401).json({ message: "Credenciais inválidas" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     const token = jwt.sign({ userId: user.id }, env.jwtSecret, {
@@ -100,7 +100,7 @@ router.post("/login", async (req: Request, res: Response) => {
       token,
     });
   } catch (error) {
-    return res.status(500).json({ message: "Erro ao autenticar usuário" });
+    return res.status(500).json({ message: "Failed to authenticate user" });
   }
 });
 

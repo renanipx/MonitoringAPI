@@ -1,2 +1,5 @@
 activities.txt
 .env
+# Supabase CLI internal files (keep only migrations and config in git)
+supabase/.branches/
+supabase/.temp/
