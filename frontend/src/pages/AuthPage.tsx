@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { login, register, type AuthResponse } from "../lib/api";
 import "../App.css";
 
@@ -15,6 +15,19 @@ function AuthPage({ onAuthSuccess }: AuthPageProps) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const passwordStrength = useMemo(() => {
+    if (mode !== "register" || !password) return null;
+    let score = 0;
+    if (password.length >= 8) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[0-9]/.test(password)) score += 1;
+    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+    if (score >= 3) return "Strong";
+    if (score === 2) return "Medium";
+    return "Weak";
+  }, [mode, password]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -60,24 +73,24 @@ function AuthPage({ onAuthSuccess }: AuthPageProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="form">
-          {mode === "login" && (
-            <>
-              <div className="social-row">
-                <button
-                  type="button"
-                  className="social-button social-google"
-                  disabled={loading}
-                >
-                  <span className="social-icon">G</span>
-                  <span>Sign in with Google</span>
-                </button>
-              </div>
+          <div className="social-row">
+            <button
+              type="button"
+              className={
+                mode === "login"
+                  ? "social-button social-google"
+                  : "social-button social-google social-button-hidden"
+              }
+              disabled={loading}
+            >
+              <span className="social-icon">G</span>
+              <span>Sign in with Google</span>
+            </button>
+          </div>
 
-              <div className="divider">
-                <span>or</span>
-              </div>
-            </>
-          )}
+          <div className="divider">
+            <span>{mode === "login" ? "or" : ""}</span>
+          </div>
 
           <label>
             Email
@@ -91,14 +104,46 @@ function AuthPage({ onAuthSuccess }: AuthPageProps) {
 
           <label>
             Password
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              minLength={6}
-              required
-            />
+            <div className="password-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                minLength={6}
+                required
+                className="password-input"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                <span
+                  className={
+                    showPassword
+                      ? "password-toggle-icon password-toggle-icon-on"
+                      : "password-toggle-icon"
+                  }
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
           </label>
+
+          {mode === "login" && (
+            <button type="button" className="forgot-password">
+              Forgot password?
+            </button>
+          )}
+
+          {passwordStrength && (
+            <div
+              className={`password-strength password-strength-${passwordStrength.toLowerCase()}`}
+            >
+              Password strength: {passwordStrength}
+            </div>
+          )}
 
           {error && <p className="error">{error}</p>}
 
