@@ -60,6 +60,25 @@ function AuthPage({ onAuthSuccess }: AuthPageProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="form">
+          {mode === "login" && (
+            <>
+              <div className="social-row">
+                <button
+                  type="button"
+                  className="social-button social-google"
+                  disabled={loading}
+                >
+                  <span className="social-icon">G</span>
+                  <span>Sign in with Google</span>
+                </button>
+              </div>
+
+              <div className="divider">
+                <span>or</span>
+              </div>
+            </>
+          )}
+
           <label>
             Email
             <input

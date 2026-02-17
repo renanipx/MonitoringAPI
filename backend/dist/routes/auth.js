@@ -8,7 +8,35 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const database_1 = require("../config/database");
 const auth_1 = require("../middleware/auth");
 const tokens_1 = require("../utils/tokens");
+const passport_1 = __importDefault(require("passport"));
+const passport_local_1 = require("passport-local");
 const router = (0, express_1.Router)();
+passport_1.default.use(new passport_local_1.Strategy({
+    usernameField: "email",
+    passwordField: "password",
+    session: false,
+}, async (email, password, done) => {
+    try {
+        const emailNorm = email.trim().toLowerCase();
+        const result = await database_1.pool.query("SELECT id, email, password_hash FROM users WHERE lower(email) = $1", [emailNorm]);
+        let userRow = result.rows[0];
+        if (!userRow) {
+            const passwordHash = await bcryptjs_1.default.hash(password, 10);
+            const insertResult = await database_1.pool.query("INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email, password_hash", [emailNorm, passwordHash]);
+            userRow = insertResult.rows[0];
+        }
+        else {
+            const validPassword = await bcryptjs_1.default.compare(password, userRow.password_hash);
+            if (!validPassword) {
+                return done(null, false, { message: "Invalid credentials" });
+            }
+        }
+        return done(null, { id: userRow.id, email: userRow.email });
+    }
+    catch (error) {
+        return done(error);
+    }
+}));
 router.post("/register", async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -54,50 +82,45 @@ router.post("/register", async (req, res) => {
         return res.status(500).json({ message: "Failed to register user" });
     }
 });
-router.post("/login", async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        if (!email || !password) {
-            return res.status(400).json({ message: "Email and password are required" });
+router.post("/login", (req, res, next) => {
+    passport_1.default.authenticate("local", { session: false }, async (err, user, info) => {
+        if (err) {
+            return res.status(500).json({ message: "Failed to authenticate user" });
         }
-        const emailNorm = email.trim().toLowerCase();
-        const result = await database_1.pool.query("SELECT id, email, password_hash FROM users WHERE lower(email) = $1", [emailNorm]);
-        if (!result.rowCount || result.rowCount === 0) {
-            return res.status(401).json({ message: "Invalid credentials" });
+        if (!user) {
+            const message = (info && info.message) || "Invalid credentials";
+            return res.status(401).json({ message });
         }
-        const user = result.rows[0];
-        const validPassword = await bcryptjs_1.default.compare(password, user.password_hash);
-        if (!validPassword) {
-            return res.status(401).json({ message: "Invalid credentials" });
+        try {
+            const access = (0, tokens_1.signAccessToken)(user.id);
+            const { token: refresh, jti } = (0, tokens_1.signRefreshToken)(user.id);
+            const refreshExp = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+            await database_1.pool.query("INSERT INTO refresh_tokens (user_id, jti, expires_at) VALUES ($1, $2, $3)", [user.id, jti, refreshExp.toISOString()]);
+            res.cookie("access_token", access, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                path: "/",
+                maxAge: 10 * 60 * 1000,
+            });
+            res.cookie("refresh_token", refresh, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                path: "/",
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+            });
+            return res.status(200).json({
+                user: {
+                    id: user.id,
+                    email: user.email,
+                },
+            });
         }
-        const access = (0, tokens_1.signAccessToken)(user.id);
-        const { token: refresh, jti } = (0, tokens_1.signRefreshToken)(user.id);
-        const refreshExp = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        await database_1.pool.query("INSERT INTO refresh_tokens (user_id, jti, expires_at) VALUES ($1, $2, $3)", [user.id, jti, refreshExp.toISOString()]);
-        res.cookie("access_token", access, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            path: "/",
-            maxAge: 10 * 60 * 1000,
-        });
-        res.cookie("refresh_token", refresh, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            path: "/",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
-        return res.status(200).json({
-            user: {
-                id: user.id,
-                email: user.email,
-            },
-        });
-    }
-    catch (error) {
-        return res.status(500).json({ message: "Failed to authenticate user" });
-    }
+        catch {
+            return res.status(500).json({ message: "Failed to authenticate user" });
+        }
+    })(req, res, next);
 });
 router.post("/refresh", async (req, res) => {
     try {
