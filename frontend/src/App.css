@@ -12,12 +12,12 @@
 .card {
   width: 100%;
   max-width: 420px;
-  padding: 2rem 2.2rem;
-  border-radius: 1rem;
+  padding: 2.25rem 2.5rem;
+  min-height: min(500px, calc(100vh - 3rem));
+  border-radius: 2rem;
   background: linear-gradient(145deg, #020617, #020617) padding-box,
-    linear-gradient(145deg, rgba(56, 189, 248, 0.5), rgba(34, 197, 94, 0.4))
-      border-box;
-  border: 1px solid transparent;
+    linear-gradient(145deg, rgba(56, 189, 248, 0.5), rgba(34, 197, 94, 0.4)) border-box;
+  border: 2px solid transparent;
   box-shadow: 0 22px 45px rgba(15, 23, 42, 0.9);
 }
 
@@ -32,7 +32,7 @@
 
 .card-subtitle {
   margin: 0;
-  margin-bottom: 1.4rem;
+  margin-bottom: 1.8rem;
   font-size: 0.95rem;
   color: #d1d5db;
   text-align: center;
@@ -44,7 +44,7 @@
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(31, 41, 55, 0.9);
-  margin-bottom: 1.4rem;
+  margin-bottom: 1.75rem;
 }
 
 .tabs button {
@@ -64,17 +64,11 @@
     0 10px 20px rgba(8, 47, 73, 0.7);
 }
 
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-}
-
 .social-row {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.75rem;
 }
 
 .social-button {
@@ -83,21 +77,17 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 0.7rem;
   border-radius: 999px;
-  border: 1px solid #1f2937;
-  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid #334155;
+  background: transparent;
   color: #e5e7eb;
-  font-size: 0.82rem;
-}
-
-.social-button-hidden {
-  visibility: hidden;
+  font-size: 0.8rem;
 }
 
 .social-button:hover:not(:disabled) {
-  border-color: #38bdf8;
-  background: rgba(15, 23, 42, 1);
+  border-color: #64748b;
+  background: rgba(15, 23, 42, 0.6);
 }
 
 .social-button:disabled {
@@ -121,6 +111,10 @@
   border: 1px solid #e5e7eb;
 }
 
+.form-register {
+  margin-top: 12%;
+}
+
 .form label {
   display: flex;
   flex-direction: column;
@@ -128,6 +122,30 @@
   gap: 0.25rem;
   font-size: 0.85rem;
   color: #9ca3af;
+  margin-top: 2%;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.forgot-password-link {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  background: none;
+  border: none;
+}
+
+.forgot-password-link:hover {
+  color: #e5e7eb;
+}
+
+.ghost-inline {
+  visibility: hidden;
 }
 
 .password-wrapper {
@@ -142,18 +160,22 @@
 
 .password-toggle {
   position: absolute;
-  right: 0.5rem;
+  right: -1.0rem;
   top: 50%;
   transform: translateY(-50%);
   border: none;
   background: transparent;
   padding: 0;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+}
+
+.password-toggle:hover .password-toggle-icon {
+  border-color: #9ca3af;
 }
 
 .password-toggle:focus,
@@ -162,38 +184,18 @@
 }
 
 .password-toggle-icon {
-  width: 1.1rem;
-  height: 0.7rem;
-  border-radius: 999px;
-  border: 2px solid #6b7280;
-  position: relative;
-}
-
-.password-toggle-icon::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 0.35rem;
-  height: 0.35rem;
-  border-radius: 999px;
-  background: #6b7280;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #9ca3af;
 }
 
 .password-toggle-icon-on {
-  border-color: #22c55e;
-}
-
-.password-toggle-icon-on::after {
-  background: #22c55e;
+  color: #f9fafb;
 }
 
 .forgot-password {
   align-self: flex-end;
-  margin-top: -0.25rem;
-  margin-bottom: 0.35rem;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: #9ca3af;
   background: none;
   border: none;
@@ -205,7 +207,7 @@
 
 .password-strength {
   font-size: 0.78rem;
-  margin-top: -0.25rem;
+  margin-top: 0.15rem;
 }
 
 .password-strength-weak {
@@ -220,11 +222,16 @@
   color: #22c55e;
 }
 
+.ghost-row {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .divider {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0.4rem 0 0.2rem;
+  margin: 0.5rem 0 0.25rem;
   font-size: 0.75rem;
   color: #6b7280;
   position: relative;
@@ -236,11 +243,9 @@
   position: absolute;
   height: 1px;
   width: 32%;
-  background: linear-gradient(
-    to right,
-    rgba(31, 41, 55, 0.1),
-    rgba(31, 41, 55, 0.9)
-  );
+  background: linear-gradient(o right,
+      rgba(31, 41, 5, 0.),
+      rgba(31, 41, 55, 0.9));
 }
 
 .divider::before {
@@ -259,6 +264,7 @@
   background: rgba(15, 23, 42, 0.9);
   color: #e5e7eb;
   font-size: 0.9rem;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
 
 .form input::placeholder {
@@ -274,8 +280,10 @@
 
 .form input:focus {
   outline: none;
-  border-color: #38bdf8;
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3);
+  border-color: #60a5fa;
+  box-shadow:
+    0 0 0 1px rgba(96, 165, 250, 0.35),
+    inset 0 0 0 1px rgba(96, 165, 250, 0.15);
 }
 
 .error {
@@ -285,13 +293,31 @@
 }
 
 .form button[type="submit"] {
-  margin-top: 0.5rem;
+  margin-top: 0.4rem;
   width: 100%;
   background: linear-gradient(135deg, #22c55e, #16a34a);
   border-radius: 999px;
   border: none;
   color: #022c22;
   font-weight: 600;
+}
+
+.forgot-inline-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.2rem;
+  margin-bottom: 0.2rem;
+}
+
+.forgot-password-inline {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  background: none;
+  border: none;
+}
+
+.forgot-password-inline:hover {
+  color: #e5e7eb;
 }
 
 .form button[type="submit"]:hover {
