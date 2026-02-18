@@ -10,11 +10,12 @@ const passport_1 = __importDefault(require("passport"));
 const auth_1 = __importDefault(require("./routes/auth"));
 const env_1 = require("./config/env");
 const app = (0, express_1.default)();
+const frontendOrigin = (env_1.env.frontendOrigin && env_1.env.frontendOrigin.replace(/\/$/, "")) || "*";
 app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
 app.use(passport_1.default.initialize());
 app.use((0, cors_1.default)({
-    origin: env_1.env.frontendOrigin || "*",
+    origin: frontendOrigin,
     credentials: true,
 }));
 app.get("/health", (_req, res) => {
@@ -24,3 +25,4 @@ app.use("/auth", auth_1.default);
 app.listen(env_1.env.port, () => {
     process.stdout.write(`API running on port ${env_1.env.port}\n`);
 });
+//# sourceMappingURL=index.js.map

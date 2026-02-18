@@ -27,6 +27,8 @@ const AUTH_PATHS_NO_REFRESH = new Set([
   "/auth/register",
   "/auth/refresh",
   "/auth/logout",
+  "/auth/forgot-password",
+  "/auth/reset-password",
 ]);
 
 async function request<T>(path: string, options: RequestInit): Promise<T> {
@@ -97,4 +99,18 @@ export async function logout() {
   if (!response.ok && response.status !== 204) {
     throw new Error("Failed to logout");
   }
+}
+
+export async function requestPasswordReset(email: string) {
+  return request<{ message: string }>("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(token: string, password: string) {
+  return request<{ message: string }>("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, password }),
+  });
 }

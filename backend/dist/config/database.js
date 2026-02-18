@@ -6,3 +6,4 @@ const env_1 = require("./env");
 exports.pool = new pg_1.Pool({
     connectionString: env_1.env.databaseUrl,
 });
+//# sourceMappingURL=database.js.map

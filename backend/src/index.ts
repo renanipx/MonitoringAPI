@@ -7,13 +7,16 @@ import { env } from "./config/env";
 
 const app = express();
 
+const frontendOrigin =
+  (env.frontendOrigin && env.frontendOrigin.replace(/\/$/, "")) || "*";
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
 
 app.use(
   cors({
-    origin: env.frontendOrigin || "*",
+    origin: frontendOrigin,
     credentials: true,
   })
 );

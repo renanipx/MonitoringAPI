@@ -10,6 +10,8 @@ const auth_1 = require("../middleware/auth");
 const tokens_1 = require("../utils/tokens");
 const passport_1 = __importDefault(require("passport"));
 const passport_local_1 = require("passport-local");
+const crypto_1 = __importDefault(require("crypto"));
+const env_1 = require("../config/env");
 const router = (0, express_1.Router)();
 passport_1.default.use(new passport_local_1.Strategy({
     usernameField: "email",
@@ -187,6 +189,71 @@ router.post("/logout", (_req, res) => {
     });
     return res.status(204).end();
 });
+router.post("/forgot-password", async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ message: "Email is required" });
+        }
+        const emailNorm = email.trim().toLowerCase();
+        const userResult = await database_1.pool.query("SELECT id FROM users WHERE lower(email) = $1", [emailNorm]);
+        if (userResult.rowCount && userResult.rowCount > 0) {
+            const user = userResult.rows[0];
+            const token = crypto_1.default.randomUUID();
+            const expires = new Date(Date.now() + 60 * 60 * 1000);
+            await database_1.pool.query("INSERT INTO password_resets (token, user_id, expires_at) VALUES ($1, $2, $3)", [token, user.id, expires.toISOString()]);
+            const frontendBase = env_1.env.frontendOrigin && env_1.env.frontendOrigin.length > 0
+                ? env_1.env.frontendOrigin
+                : "http://localhost:5173";
+            const resetUrl = `${frontendBase}/?resetToken=${token}`;
+            process.stdout.write(`Password reset link for ${emailNorm}: ${resetUrl}\n`);
+        }
+        return res.json({
+            message: "If that email is registered, a password reset link has been sent.",
+        });
+    }
+    catch (e) {
+        console.error("forgot-password error:", e);
+        return res
+            .status(500)
+            .json({ message: "Failed to initiate password reset" });
+    }
+});
+router.post("/reset-password", async (req, res) => {
+    try {
+        const { token, password } = req.body;
+        if (!token || !password) {
+            return res
+                .status(400)
+                .json({ message: "Token and new password are required" });
+        }
+        const resetResult = await database_1.pool.query("SELECT user_id, expires_at FROM password_resets WHERE token = $1", [token]);
+        if (!resetResult.rowCount) {
+            return res
+                .status(400)
+                .json({ message: "Invalid or expired password reset token" });
+        }
+        const resetRow = resetResult.rows[0];
+        if (new Date(resetRow.expires_at).getTime() <= Date.now()) {
+            await database_1.pool.query("DELETE FROM password_resets WHERE token = $1", [token]);
+            return res
+                .status(400)
+                .json({ message: "Invalid or expired password reset token" });
+        }
+        const passwordHash = await bcryptjs_1.default.hash(password, 10);
+        await database_1.pool.query("UPDATE users SET password_hash = $1 WHERE id = $2", [
+            passwordHash,
+            resetRow.user_id,
+        ]);
+        await database_1.pool.query("DELETE FROM password_resets WHERE token = $1", [token]);
+        await database_1.pool.query("UPDATE refresh_tokens SET revoked = true WHERE user_id = $1 AND revoked = false", [resetRow.user_id]);
+        return res.json({ message: "Password has been reset successfully" });
+    }
+    catch (e) {
+        console.error("reset-password error:", e);
+        return res.status(500).json({ message: "Failed to reset password" });
+    }
+});
 router.get("/me", auth_1.authenticate, async (req, res) => {
     try {
         const userId = req.user?.id;
@@ -207,3 +274,4 @@ router.get("/me", auth_1.authenticate, async (req, res) => {
     }
 });
 exports.default = router;
+//# sourceMappingURL=auth.js.map
