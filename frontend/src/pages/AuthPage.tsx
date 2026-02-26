@@ -435,7 +435,6 @@ function AuthPage({ onAuthSuccess }: AuthPageProps) {
                 <label>
                   Email
                   <input
-                    style={{ marginLeft: "2%" }}
                     type="email"
                     value={resetEmail}
                     onChange={(event) => setResetEmail(event.target.value)}

@@ -11,7 +11,7 @@ const tokens_1 = require("../utils/tokens");
 const passport_1 = __importDefault(require("passport"));
 const passport_local_1 = require("passport-local");
 const crypto_1 = __importDefault(require("crypto"));
-const env_1 = require("../config/env");
+const email_1 = require("../config/email");
 const router = (0, express_1.Router)();
 passport_1.default.use(new passport_local_1.Strategy({
     usernameField: "email",
@@ -202,11 +202,8 @@ router.post("/forgot-password", async (req, res) => {
             const token = crypto_1.default.randomUUID();
             const expires = new Date(Date.now() + 60 * 60 * 1000);
             await database_1.pool.query("INSERT INTO password_resets (token, user_id, expires_at) VALUES ($1, $2, $3)", [token, user.id, expires.toISOString()]);
-            const frontendBase = env_1.env.frontendOrigin && env_1.env.frontendOrigin.length > 0
-                ? env_1.env.frontendOrigin
-                : "http://localhost:5173";
-            const resetUrl = `${frontendBase}/?resetToken=${token}`;
-            process.stdout.write(`Password reset link for ${emailNorm}: ${resetUrl}\n`);
+            await (0, email_1.sendPasswordResetEmail)(emailNorm, token);
+            process.stdout.write(`Password reset link sent to ${emailNorm}\n`);
         }
         return res.json({
             message: "If that email is registered, a password reset link has been sent.",
