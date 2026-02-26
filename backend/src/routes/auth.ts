@@ -7,6 +7,7 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import crypto from "crypto";
 import { env } from "../config/env";
+import { sendPasswordResetEmail } from "../config/email";
 
 const router = Router();
 
@@ -286,13 +287,8 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
         [token, user.id, expires.toISOString()]
       );
 
-      const frontendBase =
-        env.frontendOrigin && env.frontendOrigin.length > 0
-          ? env.frontendOrigin
-          : "http://localhost:5173";
-      const resetUrl = `${frontendBase}/?resetToken=${token}`;
-
-      process.stdout.write(`Password reset link for ${emailNorm}: ${resetUrl}\n`);
+      await sendPasswordResetEmail(emailNorm, token);
+      process.stdout.write(`Password reset link sent to ${emailNorm}\n`);
     }
 
     return res.json({

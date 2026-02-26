@@ -13,10 +13,18 @@ if (!process.env.JWT_SECRET) {
 if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL is not set");
 }
+if (!process.env.EMAIL_USER) {
+    throw new Error("EMAIL_USER is not set");
+}
+if (!process.env.EMAIL_PASSWORD) {
+    throw new Error("EMAIL_PASSWORD is not set");
+}
 exports.env = {
     port,
     jwtSecret: process.env.JWT_SECRET,
     databaseUrl: process.env.DATABASE_URL,
     frontendOrigin: process.env.FRONTEND_ORIGIN,
+    emailUser: process.env.EMAIL_USER,
+    emailPassword: process.env.EMAIL_PASSWORD,
 };
 //# sourceMappingURL=env.js.map
