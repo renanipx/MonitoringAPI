@@ -5,6 +5,7 @@ import { authenticate } from "../middleware/auth";
 import { signAccessToken, signRefreshToken, verifyToken } from "../utils/tokens";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import crypto from "crypto";
 import { env } from "../config/env";
 import { sendPasswordResetEmail } from "../config/email";
@@ -59,6 +60,96 @@ passport.use(
     }
   )
 );
+
+if (env.googleClientId && env.googleClientSecret) {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: env.googleClientId,
+        clientSecret: env.googleClientSecret,
+        callbackURL: `${env.backendUrl}/auth/google/callback`,
+        scope: ["profile", "email"],
+      },
+      async (_accessToken, _refreshToken, profile, done) => {
+        try {
+          const email = profile.emails?.[0].value;
+          if (!email) {
+            return done(new Error("No email found in Google profile"));
+          }
+
+          const emailNorm = email.trim().toLowerCase();
+          const result = await pool.query(
+            "SELECT id, email FROM users WHERE lower(email) = $1",
+            [emailNorm]
+          );
+
+          let userRow = result.rows[0] as { id: string; email: string } | undefined;
+
+          if (!userRow) {
+            const insertResult = await pool.query(
+              "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email",
+              [emailNorm, "GOOGLE_AUTH"] // Placeholder password for social logins
+            );
+            userRow = insertResult.rows[0] as { id: string; email: string };
+          }
+
+          return done(null, { id: userRow.id, email: userRow.email });
+        } catch (error) {
+          return done(error as Error);
+        }
+      }
+    )
+  );
+}
+
+router.get("/google", (req, res, next) => {
+  if (!env.googleClientId || !env.googleClientSecret) {
+    return res.status(501).json({ message: "Google auth not configured" });
+  }
+  passport.authenticate("google", { scope: ["profile", "email"], session: false })(req, res, next);
+});
+
+router.get("/google/callback", (req, res, next) => {
+  passport.authenticate(
+    "google",
+    { session: false, failureRedirect: `${env.frontendOrigin}/?error=google_failed` },
+    async (err: any, user: any) => {
+      if (err || !user) {
+        return res.redirect(`${env.frontendOrigin}/?error=google_failed`);
+      }
+
+      try {
+        const access = signAccessToken(user.id);
+        const { token: refresh, jti } = signRefreshToken(user.id);
+
+        const refreshExp = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        await pool.query(
+          "INSERT INTO refresh_tokens (user_id, jti, expires_at) VALUES ($1, $2, $3)",
+          [user.id, jti, refreshExp.toISOString()]
+        );
+
+        res.cookie("access_token", access, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          maxAge: 10 * 60 * 1000,
+        });
+        res.cookie("refresh_token", refresh, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
+        return res.redirect(`${env.frontendOrigin}/`);
+      } catch {
+        return res.redirect(`${env.frontendOrigin}/?error=google_failed`);
+      }
+    }
+  )(req, res, next);
+});
 
 router.post("/register", async (req: Request, res: Response) => {
   try {

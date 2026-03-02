@@ -27,4 +27,7 @@ export const env = {
   frontendOrigin: process.env.FRONTEND_ORIGIN,
   emailUser: process.env.EMAIL_USER,
   emailPassword: process.env.EMAIL_PASSWORD,
+  googleClientId: process.env.GOOGLE_CLIENT_ID,
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  backendUrl: process.env.BACKEND_URL || "http://localhost:4000",
 };

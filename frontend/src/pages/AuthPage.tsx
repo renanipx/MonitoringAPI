@@ -72,6 +72,11 @@ function AuthPage({ onAuthSuccess }: AuthPageProps) {
     }
   }, [location.search]);
 
+  async function handleGoogleLogin() {
+    const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+    window.location.href = `${backendUrl}/auth/google`;
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
@@ -180,6 +185,7 @@ function AuthPage({ onAuthSuccess }: AuthPageProps) {
                 type="button"
                 className="social-button social-google"
                 disabled={loading}
+                onClick={handleGoogleLogin}
               >
                 <span className="social-icon">G</span>
                 <span>Sign in with Google</span>
