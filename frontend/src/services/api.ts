@@ -1,13 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+import { type AuthResponse, type User } from "../types/auth";
 
-export type User = {
-  id: string;
-  email: string;
-  createdAt?: string;
-};
-export type AuthResponse = {
-  user: User;
-};
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 async function coreFetch(path: string, options: RequestInit) {
   return fetch(`${API_URL}${path}`, {

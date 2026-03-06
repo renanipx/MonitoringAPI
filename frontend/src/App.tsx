@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import "./App.css";
+import "./styles/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { type User, type AuthResponse, currentUser, logout } from "./lib/api";
+import { type User, type AuthResponse } from "./types/auth";
+import { currentUser, logout } from "./services/api";
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 
