@@ -1,9 +1,10 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import passport from "passport";
+import passport from "./config/passport";
 import authRoutes from "./routes/auth";
 import { env } from "./config/env";
+import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
 
@@ -26,6 +27,8 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/auth", authRoutes);
+
+app.use(errorHandler);
 
 app.listen(env.port, () => {
   process.stdout.write(`API running on port ${env.port}\n`);
