@@ -1,4 +1,5 @@
-import "../App.css";
+import { Card, CardDescription, CardTitle } from "../components/ui/Card";
+import "../styles/App.css";
 
 type DashboardPageProps = {
   user: {
@@ -11,16 +12,16 @@ type DashboardPageProps = {
 function DashboardPage({ user, onLogout }: DashboardPageProps) {
   return (
     <div className="app">
-      <div className="card">
-        <h1>Monitoring dashboard</h1>
-        <p className="card-subtitle">
+      <Card>
+        <CardTitle>Monitoring dashboard</CardTitle>
+        <CardDescription>
           Soon you will see the real-time status of your APIs here.
-        </p>
+        </CardDescription>
         <p>Signed in as {user.email}</p>
         <button type="button" onClick={onLogout}>
           Log out
         </button>
-      </div>
+      </Card>
     </div>
   );
 }
