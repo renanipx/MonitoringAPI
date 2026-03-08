@@ -107,3 +107,29 @@ export async function resetPassword(token: string, password: string) {
     body: JSON.stringify({ token, password }),
   });
 }
+
+// Monitors
+export async function createMonitor(name: string, url: string, intervalMinutes: number = 5) {
+  return request<{ monitor: any }>("/monitors", {
+    method: "POST",
+    body: JSON.stringify({ name, url, interval_minutes: intervalMinutes }),
+  });
+}
+
+export async function listMonitors() {
+  return request<{ monitors: any[] }>("/monitors", {
+    method: "GET",
+  });
+}
+
+export async function deleteMonitor(id: string) {
+  return request<void>(`/monitors/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getMonitorStats(id: string) {
+  return request<{ uptime_24h: number; recent_checks: any[] }>(`/monitors/${id}/stats`, {
+    method: "GET",
+  });
+}
