@@ -24,10 +24,20 @@ export class MonitorService {
 
   static async list(userId: string) {
     const result = await pool.query(
-      "SELECT * FROM monitors WHERE user_id = $1 ORDER BY created_at DESC",
+      `SELECT m.*, 
+        (SELECT json_agg(h) FROM (
+          SELECT response_time_ms, is_up, checked_at 
+          FROM monitor_checks 
+          WHERE monitor_id = m.id 
+          ORDER BY checked_at DESC 
+          LIMIT 20
+        ) h) as recent_checks
+      FROM monitors m 
+      WHERE m.user_id = $1 
+      ORDER BY m.created_at DESC`,
       [userId]
     );
-    return result.rows as Monitor[];
+    return result.rows;
   }
 
   static async getById(userId: string, id: string) {

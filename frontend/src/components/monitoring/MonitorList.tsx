@@ -76,6 +76,67 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
     return "response-slow";
   };
 
+  const getRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 30) return "just now";
+    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+    
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays}d ago`;
+  };
+
+  const Sparkline = ({ data }: { data: any[] }) => {
+    if (!data || data.length < 2) return null;
+    
+    // Reverse to show chronological order (left to right)
+    const checks = [...data].reverse();
+    const width = 120;
+    const height = 30;
+    const padding = 2;
+    
+    const maxTime = Math.max(...checks.map(c => c.response_time_ms || 0), 100);
+    const minTime = Math.min(...checks.map(c => c.response_time_ms || 0), 0);
+    const range = maxTime - minTime || 1;
+
+    const points = checks.map((c, i) => {
+      const x = (i / (checks.length - 1)) * width;
+      const y = height - padding - (((c.response_time_ms || 0) - minTime) / range) * (height - 2 * padding);
+      return `${x},${y}`;
+    }).join(" ");
+
+    // Determine trend color
+    const lastThree = checks.slice(-3);
+    const isUnstable = checks.some(c => !c.is_up);
+    const avg = checks.reduce((acc, c) => acc + (c.response_time_ms || 0), 0) / checks.length;
+    const variance = checks.reduce((acc, c) => acc + Math.pow((c.response_time_ms || 0) - avg, 2), 0) / checks.length;
+    
+    let color = "#22c55e"; // stable green
+    if (isUnstable) color = "#ef4444"; // unstable red
+    else if (Math.sqrt(variance) > avg * 0.3) color = "#eab308"; // fluctuating yellow
+
+    return (
+      <svg width={width} height={height} className="sparkline">
+        <polyline
+          fill="none"
+          stroke={color}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          points={points}
+        />
+      </svg>
+    );
+  };
+
   if (loading && monitors.length === 0) return <div className="loading">Loading monitors...</div>;
   if (error) return <div className="error">{error}</div>;
 
@@ -119,6 +180,11 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
                       </div>
                     </div>
                     <p className="monitor-url">{m.url}</p>
+                    {m.recent_checks && m.recent_checks.length > 0 && (
+                      <div className="sparkline-wrapper">
+                        <Sparkline data={m.recent_checks} />
+                      </div>
+                    )}
                   </div>
 
                   <div className="monitor-footer">
@@ -131,12 +197,12 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
                         <span className="status-code">{m.last_status}</span>
                       )}
                     </div>
-                    <span className="last-check">
+                    <span 
+                      className="last-check" 
+                      title={m.last_check_at ? new Date(m.last_check_at).toLocaleString() : ""}
+                    >
                       {m.last_check_at
-                        ? new Date(m.last_check_at).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
+                        ? getRelativeTime(m.last_check_at)
                         : "Never"}
                     </span>
                   </div>
