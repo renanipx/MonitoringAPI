@@ -92,9 +92,9 @@ export class MonitorWorkerService {
         // Update monitor status
         await client.query(
           `UPDATE monitors 
-           SET last_status = $1, last_check_at = NOW() 
-           WHERE id = $2`,
-          [statusCode, monitor.id]
+           SET last_status = $1, last_check_at = NOW(), last_response_time_ms = $2 
+           WHERE id = $3`,
+          [statusCode, responseTimeMs, monitor.id]
         );
 
         await client.query("COMMIT");

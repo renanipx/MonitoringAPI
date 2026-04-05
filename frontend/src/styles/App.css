@@ -505,6 +505,33 @@
   margin-bottom: 0.5rem;
 }
 
+.monitor-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.response-time {
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: monospace;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.4rem;
+  background: rgba(15, 23, 42, 0.3);
+}
+
+.response-fast {
+  color: #4ade80;
+}
+
+.response-moderate {
+  color: #fbbf24;
+}
+
+.response-slow {
+  color: #f87171;
+}
+
 .monitor-title-row {
   display: flex;
   align-items: center;

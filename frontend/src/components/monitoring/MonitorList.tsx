@@ -69,6 +69,13 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
     return { label: "Pending", className: "status-pending", color: "#9ca3af" };
   };
 
+  const getResponseTimeColor = (ms: number | undefined) => {
+    if (!ms) return "text-muted";
+    if (ms < 200) return "response-fast";
+    if (ms <= 500) return "response-moderate";
+    return "response-slow";
+  };
+
   if (loading && monitors.length === 0) return <div className="loading">Loading monitors...</div>;
   if (error) return <div className="error">{error}</div>;
 
@@ -93,16 +100,23 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
                         <Globe size={18} className="monitor-icon" />
                         <h3>{m.name}</h3>
                       </div>
-                      <button
-                        className="delete-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(m.id);
-                        }}
-                        title="Delete monitor"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div className="monitor-header-right">
+                        {m.last_response_time_ms !== undefined && m.last_response_time_ms !== null && (
+                          <span className={`response-time ${getResponseTimeColor(m.last_response_time_ms)}`}>
+                            {m.last_response_time_ms}ms
+                          </span>
+                        )}
+                        <button
+                          className="delete-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(m.id);
+                          }}
+                          title="Delete monitor"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
                     <p className="monitor-url">{m.url}</p>
                   </div>

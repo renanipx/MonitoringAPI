@@ -8,6 +8,7 @@ CREATE TABLE monitors (
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   last_status INTEGER,
   last_check_at TIMESTAMPTZ,
+  last_response_time_ms INTEGER,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
