@@ -56,6 +56,19 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
     }
   }
 
+  const getStatusInfo = (status: number) => {
+    if (status >= 200 && status < 300) {
+      return { label: "Online", className: "status-online", color: "#22c55e" };
+    }
+    if (status >= 400 && status < 500) {
+      return { label: "Degraded", className: "status-degraded", color: "#eab308" };
+    }
+    if (status >= 500 || status === 0) {
+      return { label: "Offline", className: "status-offline", color: "#ef4444" };
+    }
+    return { label: "Pending", className: "status-pending", color: "#9ca3af" };
+  };
+
   if (loading && monitors.length === 0) return <div className="loading">Loading monitors...</div>;
   if (error) return <div className="error">{error}</div>;
 
@@ -65,36 +78,58 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
         {monitors.length === 0 ? (
           <p className="empty-state">No monitors registered yet. Add one above!</p>
         ) : (
-          monitors.map((m) => (
-            <Card key={m.id} className={`monitor-card ${selectedMonitor?.id === m.id ? "selected" : ""}`}>
-              <div className="monitor-card-header">
-                <div className="monitor-info" onClick={() => handleSelect(m)}>
-                  <div className="monitor-title-row">
-                    <Globe size={16} />
-                    <h3>{m.name}</h3>
+          monitors.map((m) => {
+            const statusInfo = getStatusInfo(m.last_status);
+            return (
+              <Card
+                key={m.id}
+                className={`monitor-card ${selectedMonitor?.id === m.id ? "selected" : ""}`}
+                onClick={() => handleSelect(m)}
+              >
+                <div className="monitor-card-body">
+                  <div className="monitor-main-info">
+                    <div className="monitor-header-top">
+                      <div className="monitor-title-row">
+                        <Globe size={18} className="monitor-icon" />
+                        <h3>{m.name}</h3>
+                      </div>
+                      <button
+                        className="delete-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(m.id);
+                        }}
+                        title="Delete monitor"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                    <p className="monitor-url">{m.url}</p>
                   </div>
-                  <span className="monitor-url">{m.url}</span>
+
+                  <div className="monitor-footer">
+                    <div className="status-group">
+                      <div className={`status-badge ${statusInfo.className}`}>
+                        <span className="status-dot"></span>
+                        {statusInfo.label}
+                      </div>
+                      {m.last_status > 0 && (
+                        <span className="status-code">{m.last_status}</span>
+                      )}
+                    </div>
+                    <span className="last-check">
+                      {m.last_check_at
+                        ? new Date(m.last_check_at).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "Never"}
+                    </span>
+                  </div>
                 </div>
-                <button
-                  className="delete-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(m.id);
-                  }}
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-              <div className="monitor-status-row">
-                <div className={`status-badge ${m.last_status >= 200 && m.last_status < 300 ? "up" : "down"}`}>
-                  {m.last_status === 0 ? "Offline" : (m.last_status || "Pending")}
-                </div>
-                <span className="last-check">
-                  {m.last_check_at ? new Date(m.last_check_at).toLocaleTimeString() : "Never checked"}
-                </span>
-              </div>
-            </Card>
-          ))
+              </Card>
+            );
+          })
         )}
       </div>
 

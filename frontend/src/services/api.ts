@@ -61,7 +61,16 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
     throw new Error(message);
   }
 
-  return (await response.json()) as T;
+  if (response.status === 204) {
+    return null as T;
+  }
+
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    return (await response.json()) as T;
+  }
+
+  return null as T;
 }
 
 export async function register(email: string, password: string) {
