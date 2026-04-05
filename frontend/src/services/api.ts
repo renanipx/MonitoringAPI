@@ -61,7 +61,16 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
     throw new Error(message);
   }
 
-  return (await response.json()) as T;
+  if (response.status === 204) {
+    return null as T;
+  }
+
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    return (await response.json()) as T;
+  }
+
+  return null as T;
 }
 
 export async function register(email: string, password: string) {
@@ -105,5 +114,31 @@ export async function resetPassword(token: string, password: string) {
   return request<{ message: string }>("/auth/reset-password", {
     method: "POST",
     body: JSON.stringify({ token, password }),
+  });
+}
+
+// Monitors
+export async function createMonitor(name: string, url: string, intervalMinutes: number = 5) {
+  return request<{ monitor: any }>("/monitors", {
+    method: "POST",
+    body: JSON.stringify({ name, url, interval_minutes: intervalMinutes }),
+  });
+}
+
+export async function listMonitors() {
+  return request<{ monitors: any[] }>("/monitors", {
+    method: "GET",
+  });
+}
+
+export async function deleteMonitor(id: string) {
+  return request<void>(`/monitors/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getMonitorStats(id: string) {
+  return request<{ uptime_24h: number; recent_checks: any[] }>(`/monitors/${id}/stats`, {
+    method: "GET",
   });
 }
