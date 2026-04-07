@@ -140,8 +140,54 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
   if (loading && monitors.length === 0) return <div className="loading">Loading monitors...</div>;
   if (error) return <div className="error">{error}</div>;
 
+  const totalMonitors = monitors.length;
+  const onlineMonitors = monitors.filter(m => m.last_status >= 200 && m.last_status < 300).length;
+  const offlineMonitors = monitors.filter(m => m.last_status >= 500 || m.last_status === 0).length;
+  const avgResponseTime = monitors.length > 0 
+    ? Math.round(monitors.reduce((acc, m) => acc + (m.last_response_time_ms || 0), 0) / monitors.length) 
+    : 0;
+
   return (
     <div className="monitor-container">
+      <div className="dashboard-summary">
+        <Card className="summary-card">
+          <div className="summary-icon total">
+            <Globe size={20} />
+          </div>
+          <div className="summary-info">
+            <span className="summary-label">Total</span>
+            <span className="summary-value">{totalMonitors}</span>
+          </div>
+        </Card>
+        <Card className="summary-card">
+          <div className="summary-icon online">
+            <Activity size={20} />
+          </div>
+          <div className="summary-info">
+            <span className="summary-label">Online</span>
+            <span className="summary-value text-green">{onlineMonitors}</span>
+          </div>
+        </Card>
+        <Card className="summary-card">
+          <div className="summary-icon offline">
+            <Activity size={20} />
+          </div>
+          <div className="summary-info">
+            <span className="summary-label">Offline</span>
+            <span className="summary-value text-red">{offlineMonitors}</span>
+          </div>
+        </Card>
+        <Card className="summary-card">
+          <div className="summary-icon avg">
+            <Activity size={20} />
+          </div>
+          <div className="summary-info">
+            <span className="summary-label">Avg. Response</span>
+            <span className="summary-value">{avgResponseTime}ms</span>
+          </div>
+        </Card>
+      </div>
+
       <div className="monitor-list-grid">
         {monitors.length === 0 ? (
           <p className="empty-state">No monitors registered yet. Add one above!</p>
