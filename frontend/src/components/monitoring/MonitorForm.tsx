@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { createMonitor } from "../../services/api";
+import { Plus } from "lucide-react";
 
 interface MonitorFormProps {
   onSuccess: () => void;
@@ -37,7 +38,7 @@ export function MonitorForm({ onSuccess }: MonitorFormProps) {
       <div className="form-grid">
         <Input
           label="Monitor name"
-          placeholder="My API"
+          placeholder="e.g. Payments API"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -50,20 +51,28 @@ export function MonitorForm({ onSuccess }: MonitorFormProps) {
           onChange={(e) => setUrl(e.target.value)}
           required
         />
-        <Input
-          label="Interval (minutes)"
-          type="number"
-          min={1}
-          max={60}
-          value={interval}
-          onChange={(e) => setIntervalValue(Number(e.target.value))}
-          required
-        />
+        <div className="input-group">
+          <label className="input-label">Check interval</label>
+          <select
+            className="form-select"
+            value={interval}
+            onChange={(e) => setIntervalValue(Number(e.target.value))}
+            required
+          >
+            <option value={1}>1 min</option>
+            <option value={5}>5 min</option>
+            <option value={10}>10 min</option>
+            <option value={30}>30 min</option>
+          </select>
+        </div>
       </div>
       {error && <p className="error">{error}</p>}
-      <Button type="submit" loading={loading} className="mt-4">
-        Add Monitor
-      </Button>
+      <div className="form-actions">
+        <Button type="submit" loading={loading} className="submit-btn">
+          <Plus size={18} />
+          <span>Create Monitor</span>
+        </Button>
+      </div>
     </form>
   );
 }
