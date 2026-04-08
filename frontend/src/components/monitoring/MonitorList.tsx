@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { listMonitors, deleteMonitor, getMonitorStats } from "../../services/api";
 import { Card } from "../ui/Card";
 import { MonitorChart } from "./MonitorChart.tsx";
-import { Trash2, Activity, Globe } from "lucide-react";
+import { Trash2, Activity, Globe, Search, Filter, Eye, Pencil } from "lucide-react";
 
 interface MonitorListProps {
   refreshKey: number;
@@ -14,6 +14,8 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedMonitor, setSelectedMonitor] = useState<any | null>(null);
   const [stats, setStats] = useState<any | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "online" | "offline">("all");
 
   async function fetchMonitors() {
     setLoading(true);
@@ -147,6 +149,19 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
     ? Math.round(monitors.reduce((acc, m) => acc + (m.last_response_time_ms || 0), 0) / monitors.length) 
     : 0;
 
+  const filteredMonitors = monitors.filter(m => {
+    const matchesSearch = 
+      m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      m.url.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const isOnline = m.last_status >= 200 && m.last_status < 300;
+    const isOffline = m.last_status >= 500 || m.last_status === 0;
+
+    if (statusFilter === "online") return matchesSearch && isOnline;
+    if (statusFilter === "offline") return matchesSearch && isOffline;
+    return matchesSearch;
+  });
+
   return (
     <div className="monitor-container">
       <div className="dashboard-summary">
@@ -188,11 +203,48 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
         </Card>
       </div>
 
+      <div className="filter-bar">
+        <div className="search-wrapper">
+          <Search size={18} className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search monitors by name or URL..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+        </div>
+        <div className="status-filters">
+          <button
+            className={`filter-btn ${statusFilter === "all" ? "active" : ""}`}
+            onClick={() => setStatusFilter("all")}
+          >
+            All
+          </button>
+          <button
+            className={`filter-btn ${statusFilter === "online" ? "active" : ""}`}
+            onClick={() => setStatusFilter("online")}
+          >
+            Online
+          </button>
+          <button
+            className={`filter-btn ${statusFilter === "offline" ? "active" : ""}`}
+            onClick={() => setStatusFilter("offline")}
+          >
+            Offline
+          </button>
+        </div>
+      </div>
+
       <div className="monitor-list-grid">
-        {monitors.length === 0 ? (
-          <p className="empty-state">No monitors registered yet. Add one above!</p>
+        {filteredMonitors.length === 0 ? (
+          <p className="empty-state">
+            {searchTerm || statusFilter !== "all" 
+              ? "No monitors match your search/filter." 
+              : "No monitors registered yet. Add one above!"}
+          </p>
         ) : (
-          monitors.map((m) => {
+          filteredMonitors.map((m) => {
             const statusInfo = getStatusInfo(m.last_status);
             return (
               <Card
@@ -213,16 +265,38 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
                             {m.last_response_time_ms}ms
                           </span>
                         )}
-                        <button
-                          className="delete-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(m.id);
-                          }}
-                          title="Delete monitor"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="card-actions">
+                          <button
+                            className="action-btn view"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelect(m);
+                            }}
+                            title="View details"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            className="action-btn edit"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              alert("Edit functionality coming soon!");
+                            }}
+                            title="Edit monitor"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            className="action-btn delete"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(m.id);
+                            }}
+                            title="Delete monitor"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                     <p className="monitor-url">{m.url}</p>
