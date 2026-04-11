@@ -56,19 +56,29 @@ export class MetricsService {
    * Retrieves an overview for a user dashboard (overall metrics)
    */
   static async getDashboardOverview(userId: string) {
-    // Media do uptime geral das ultimas 24h para todos os monitores do usuario
+    // Generate buckets for the last 24h by hour so Recharts always has 24 points to draw lines,
+    // otherwise 1 single hour of data results in a single point that doesn't draw a line.
     const query = `
+      WITH time_buckets AS (
+        SELECT generate_series(
+          date_trunc('hour', NOW() - INTERVAL '24 hours'),
+          date_trunc('hour', NOW()),
+          '1 hour'::interval
+        ) AS bucket
+      )
       SELECT 
-        date_trunc('hour', mc.checked_at) as "time",
+        tb.bucket as "time",
         ROUND(AVG(mc.response_time_ms)) as avg_response_time,
         CASE WHEN COUNT(mc.id) > 0 THEN 
           (COUNT(mc.id) FILTER (WHERE mc.is_up = true)::float / COUNT(mc.id)) * 100 
-        ELSE NULL END as uptime_percentage
-      FROM monitor_checks mc
-      JOIN monitors m ON mc.monitor_id = m.id
-      WHERE m.user_id = $1 AND mc.checked_at >= NOW() - INTERVAL '24 hours'
-      GROUP BY date_trunc('hour', mc.checked_at)
-      ORDER BY date_trunc('hour', mc.checked_at) ASC
+        ELSE 100 END as uptime_percentage
+      FROM time_buckets tb
+      LEFT JOIN monitor_checks mc 
+        ON date_trunc('hour', mc.checked_at) = tb.bucket
+      LEFT JOIN monitors m 
+        ON mc.monitor_id = m.id AND m.user_id = $1
+      GROUP BY tb.bucket
+      ORDER BY tb.bucket ASC
     `;
 
     const result = await pool.query(query, [userId]);

@@ -1,24 +1,36 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useEffect } from "react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
-import { createMonitor } from "../../services/api";
-import { Plus } from "lucide-react";
+import { createMonitor, updateMonitor } from "../../services/api";
+import { Plus, Save } from "lucide-react";
 import { useToast } from "../ui/Toast";
 
 interface MonitorFormProps {
   onSuccess: () => void;
+  initialData?: any; // To allow editing
 }
 
-export function MonitorForm({ onSuccess }: MonitorFormProps) {
+export function MonitorForm({ onSuccess, initialData }: MonitorFormProps) {
   const { showToast } = useToast();
-  const [name, setName] = useState("");
-  const [url, setUrl] = useState("");
-  const [interval, setIntervalValue] = useState(5);
-  const [webhookUrl, setWebhookUrl] = useState("");
-  const [method, setMethod] = useState("GET");
-  const [expectedStatusCode, setExpectedStatusCode] = useState("");
+  const [name, setName] = useState(initialData?.name || "");
+  const [url, setUrl] = useState(initialData?.url || "");
+  const [interval, setIntervalValue] = useState(initialData?.interval_minutes || 5);
+  const [webhookUrl, setWebhookUrl] = useState(initialData?.webhook_url || "");
+  const [method, setMethod] = useState(initialData?.method || "GET");
+  const [expectedStatusCode, setExpectedStatusCode] = useState(initialData?.expected_status_code || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialData) {
+      setName(initialData.name || "");
+      setUrl(initialData.url || "");
+      setIntervalValue(initialData.interval_minutes || 5);
+      setWebhookUrl(initialData.webhook_url || "");
+      setMethod(initialData.method || "GET");
+      setExpectedStatusCode(initialData.expected_status_code || "");
+    }
+  }, [initialData]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -26,18 +38,26 @@ export function MonitorForm({ onSuccess }: MonitorFormProps) {
     setError(null);
 
     try {
-      const code = expectedStatusCode ? parseInt(expectedStatusCode) : null;
-      await createMonitor(name, url, interval, webhookUrl, method, code);
-      setName("");
-      setUrl("");
-      setIntervalValue(5);
-      setWebhookUrl("");
-      setMethod("GET");
-      setExpectedStatusCode("");
-      showToast("Monitor created successfully!", "success");
+      const code = expectedStatusCode ? parseInt(expectedStatusCode as string) : null;
+      if (initialData?.id) {
+        await updateMonitor(initialData.id, name, url, interval, webhookUrl, method, code);
+        showToast("Monitor updated successfully!", "success");
+      } else {
+        await createMonitor(name, url, interval, webhookUrl, method, code);
+        showToast("Monitor created successfully!", "success");
+      }
+      
+      if (!initialData) {
+        setName("");
+        setUrl("");
+        setIntervalValue(5);
+        setWebhookUrl("");
+        setMethod("GET");
+        setExpectedStatusCode("");
+      }
       onSuccess();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to create monitor";
+      const message = err instanceof Error ? err.message : "Failed to save monitor";
       setError(message);
       showToast(message, "error");
     } finally {
@@ -47,6 +67,11 @@ export function MonitorForm({ onSuccess }: MonitorFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="monitor-form">
+      {initialData && (
+        <div className="editing-indicator" style={{ marginBottom: '1rem', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid #38bdf8', padding: '0.5rem', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#38bdf8', fontSize: '0.85rem', fontWeight: 600 }}>
+          <Save size={16} /> Editing Mode Active
+        </div>
+      )}
       <div className="form-grid">
         <Input
           label="Monitor name"
@@ -109,8 +134,8 @@ export function MonitorForm({ onSuccess }: MonitorFormProps) {
       {error && <p className="error">{error}</p>}
       <div className="form-actions mt-4">
         <Button type="submit" loading={loading} className="submit-btn" style={{marginTop: "1rem"}}>
-          <Plus size={18} />
-          <span>Create Monitor</span>
+          {initialData ? <Save size={18} /> : <Plus size={18} />}
+          <span>{initialData ? "Save Changes" : "Create Monitor"}</span>
         </Button>
       </div>
     </form>

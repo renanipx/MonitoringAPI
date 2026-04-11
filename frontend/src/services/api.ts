@@ -125,6 +125,13 @@ export async function createMonitor(name: string, url: string, intervalMinutes: 
   });
 }
 
+export async function updateMonitor(id: string, name: string, url: string, intervalMinutes: number = 5, webhookUrl?: string, method: string = "GET", expectedStatusCode?: number | null) {
+  return request<{ monitor: any }>(`/monitors/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({ name, url, interval_minutes: intervalMinutes, webhook_url: webhookUrl, method, expected_status_code: expectedStatusCode }),
+  });
+}
+
 export async function listMonitors() {
   return request<{ monitors: any[] }>("/monitors", {
     method: "GET",

@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { type User, type AuthResponse } from "./types/auth";
 import { currentUser, logout } from "./services/api";
 import AuthPage from "./pages/AuthPage";
-import GrafanaDashboardPage from "./pages/GrafanaDashboardPage";
+import MainDashboardPage from "./pages/MainDashboardPage";
 import PublicStatusPage from "./pages/PublicStatusPage";
 import { ToastProvider } from "./components/ui/Toast";
 
@@ -49,7 +49,7 @@ function App() {
             path="/dashboard"
             element={
               user ? (
-                <GrafanaDashboardPage user={user} onLogout={handleLogout} />
+                <MainDashboardPage user={user} onLogout={handleLogout} />
               ) : (
                 <Navigate to="/" replace />
               )
