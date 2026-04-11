@@ -5,7 +5,7 @@ import { AppError } from "../errors/AppError";
 export class MonitorController {
   static async create(req: Request, res: Response, next: NextFunction) {
     try {
-      const { name, url, interval_minutes, webhook_url } = req.body;
+      const { name, url, interval_minutes, webhook_url, method, expected_status_code } = req.body;
       const userId = req.user?.id;
       if (!userId) throw new AppError("Unauthorized", 401);
 
@@ -13,7 +13,7 @@ export class MonitorController {
         throw new AppError("Name and URL are required", 400);
       }
 
-      const monitor = await MonitorService.create(userId, name, url, interval_minutes, webhook_url);
+      const monitor = await MonitorService.create(userId, name, url, interval_minutes, webhook_url, method, expected_status_code);
       return res.status(201).json({ monitor });
     } catch (error) {
       next(error);

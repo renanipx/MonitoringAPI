@@ -1,0 +1,360 @@
+/* Grafana Dashboard Layout */
+.grafana-dashboard {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  background-color: #020617;
+  overflow: hidden;
+  align-items: stretch;
+  justify-content: flex-start;
+  box-sizing: border-box;
+}
+
+.dashboard-sidebar {
+  width: 260px;
+  background: #0f172a;
+  border-right: 1px solid #1e293b;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sidebar-logo {
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid #1e293b;
+}
+
+.sidebar-logo h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.sidebar-nav {
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-item:hover, .nav-item.active {
+  background: rgba(56, 189, 248, 0.1);
+  color: #f8fafc;
+}
+
+.nav-item.active {
+  border-left: 3px solid #38bdf8;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.sidebar-bottom {
+  padding: 1.5rem;
+  border-top: 1px solid #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  overflow: hidden;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #38bdf8, #22c55e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #020617;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.user-email-truncate {
+  color: #f8fafc;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+
+/* Grafana Main Content Area */
+.grafana-content {
+  flex: 1;
+  padding: 2rem 2.5rem;
+  overflow-y: auto;
+  background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.05), transparent 40%),
+              radial-gradient(circle at bottom center, rgba(34, 197, 94, 0.03), transparent 40%);
+}
+
+.grafana-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.header-title h1 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.75rem;
+  color: #f8fafc;
+}
+
+.header-title p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.5rem;
+  background: #38bdf8;
+  color: #0f172a;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background: #0ea5e9;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #f8fafc;
+  border: 1px solid #334155;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #1e293b;
+}
+
+/* KPI Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.kpi-card {
+  padding: 1.5rem !important;
+  min-height: unset !important;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.6) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+.kpi-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kpi-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-label {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.kpi-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+/* Panels Grid */
+.panels-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.panel-col-span-2 {
+  grid-column: span 2;
+}
+
+.panel-col-span-1 {
+  grid-column: span 1;
+}
+
+.metric-panel {
+  padding: 1.25rem !important;
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  min-height: 300px !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.panel-chart-container {
+  flex: 1;
+  min-height: 220px;
+}
+
+.empty-panel {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+/* Tables styling */
+.table-card {
+  padding: 0 !important;
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  overflow: hidden;
+  min-height: unset !important;
+}
+
+.table-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.table-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #f8fafc;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.modern-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.modern-table th {
+  padding: 1rem 1.5rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: #64748b;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.modern-table td {
+  padding: 1rem 1.5rem;
+  font-size: 0.95rem;
+  color: #e2e8f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.modern-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.modern-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.dashboard-modal {
+  max-width: 500px !important;
+}
+
+@media (max-width: 1024px) {
+  .panels-grid {
+    grid-template-columns: 1fr;
+  }
+  .panel-col-span-2, .panel-col-span-1 {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .grafana-dashboard {
+    flex-direction: column;
+  }
+  .dashboard-sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+  }
+  .sidebar-nav, .sidebar-bottom .user-profile {
+    display: none;
+  }
+  .sidebar-bottom {
+    border: none;
+    padding: 1rem;
+  }
+}

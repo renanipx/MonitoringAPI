@@ -15,6 +15,8 @@ export function MonitorForm({ onSuccess }: MonitorFormProps) {
   const [url, setUrl] = useState("");
   const [interval, setIntervalValue] = useState(5);
   const [webhookUrl, setWebhookUrl] = useState("");
+  const [method, setMethod] = useState("GET");
+  const [expectedStatusCode, setExpectedStatusCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,11 +26,14 @@ export function MonitorForm({ onSuccess }: MonitorFormProps) {
     setError(null);
 
     try {
-      await createMonitor(name, url, interval, webhookUrl);
+      const code = expectedStatusCode ? parseInt(expectedStatusCode) : null;
+      await createMonitor(name, url, interval, webhookUrl, method, code);
       setName("");
       setUrl("");
       setIntervalValue(5);
       setWebhookUrl("");
+      setMethod("GET");
+      setExpectedStatusCode("");
       showToast("Monitor created successfully!", "success");
       onSuccess();
     } catch (err) {
@@ -72,6 +77,27 @@ export function MonitorForm({ onSuccess }: MonitorFormProps) {
             <option value={30}>30 min</option>
           </select>
         </div>
+        <div className="input-group">
+          <label className="input-label">HTTP Method</label>
+          <select
+            className="form-select"
+            value={method}
+            onChange={(e) => setMethod(e.target.value)}
+          >
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+            <option value="PATCH">PATCH</option>
+          </select>
+        </div>
+        <Input
+          label="Expected Status Code (Optional)"
+          placeholder="e.g. 200 (default: 2xx)"
+          type="number"
+          value={expectedStatusCode}
+          onChange={(e) => setExpectedStatusCode(e.target.value)}
+        />
         <Input
           label="Discord/Slack Webhook URL (Optional)"
           placeholder="https://discord.com/api/webhooks/..."

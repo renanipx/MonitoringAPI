@@ -16,10 +16,10 @@ export interface Monitor {
 }
 
 export class MonitorService {
-  static async create(userId: string, name: string, url: string, intervalMinutes: number = 5, webhookUrl?: string) {
+  static async create(userId: string, name: string, url: string, intervalMinutes: number = 5, webhookUrl?: string, method: string = "GET", expectedStatusCode?: number | null) {
     const result = await pool.query(
-      "INSERT INTO monitors (user_id, name, url, interval_minutes, webhook_url) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [userId, name, url, intervalMinutes, webhookUrl || null]
+      "INSERT INTO monitors (user_id, name, url, interval_minutes, webhook_url, method, expected_status_code) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+      [userId, name, url, intervalMinutes, webhookUrl || null, method || "GET", expectedStatusCode || null]
     );
     return result.rows[0] as Monitor;
   }

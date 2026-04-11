@@ -3,6 +3,7 @@ import { pool } from "../config/database";
 
 export class MonitorWorkerService {
   private static isRunning = false;
+  private static isProcessing = false;
   private static interval: NodeJS.Timeout | null = null;
 
   static start(intervalMs: number = 60000) { // Default check every 1 minute
@@ -23,6 +24,11 @@ export class MonitorWorkerService {
   }
 
   private static async runChecks() {
+    if (this.isProcessing) {
+      console.log('Worker: Skipped run because previous check is still processing.');
+      return;
+    }
+    this.isProcessing = true;
     try {
       const query = `
         SELECT * FROM monitors 
@@ -42,20 +48,32 @@ export class MonitorWorkerService {
       await Promise.allSettled(monitors.map((monitor: any) => this.checkMonitor(monitor)));
     } catch (error) {
       console.error("Worker error during runChecks:", error);
+    } finally {
+      this.isProcessing = false;
     }
   }
 
-  private static async ping(url: string) {
+  private static async ping(url: string, method: string = "GET", expectedStatusCode: number | null = null) {
     const start = Date.now();
     try {
-      const response = await axios.get(url, {
+      const response = await axios({
+        url,
+        method: (method || "GET").toUpperCase(),
         timeout: 10000,
         validateStatus: () => true,
       });
+      
+      let isUp = false;
+      if (expectedStatusCode) {
+        isUp = response.status === expectedStatusCode;
+      } else {
+        isUp = response.status >= 200 && response.status < 300;
+      }
+
       return { 
         statusCode: response.status, 
         responseTimeMs: Date.now() - start, 
-        isUp: response.status >= 200 && response.status < 300,
+        isUp,
         errorMessage: null
       };
     } catch (error: any) {
@@ -76,13 +94,13 @@ export class MonitorWorkerService {
   }
 
   private static async checkMonitor(monitor: any) {
-    let result = await this.ping(monitor.url);
+    let result = await this.ping(monitor.url, monitor.method, monitor.expected_status_code);
 
     // Double-Check Logic
     if (!result.isUp) {
       console.log(`Worker: Monitor ${monitor.name} failed (${result.errorMessage || result.statusCode}). Double-checking in 3s...`);
       await new Promise(resolve => setTimeout(resolve, 3000));
-      const retryResult = await this.ping(monitor.url);
+      const retryResult = await this.ping(monitor.url, monitor.method, monitor.expected_status_code);
       result = retryResult;
     }
 
