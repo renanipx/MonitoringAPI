@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import passport from "./config/passport";
 import authRoutes from "./routes/auth";
 import monitorRoutes from "./routes/monitor";
+import publicRoutes from "./routes/public.routes";
 import { env } from "./config/env";
 import { errorHandler } from "./middleware/errorHandler";
 import { MonitorWorkerService } from "./services/monitor-worker.service";
@@ -30,6 +31,7 @@ app.get("/health", (_req, res) => {
 
 app.use("/auth", authRoutes);
 app.use("/monitors", monitorRoutes);
+app.use("/public", publicRoutes);
 
 app.use(errorHandler);
 

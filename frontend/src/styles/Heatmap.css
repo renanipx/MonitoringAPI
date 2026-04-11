@@ -1,0 +1,50 @@
+.heatmap-container {
+  display: flex;
+  flex-direction: column;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.heatmap-blocks {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.heatmap-block {
+  flex: 1;
+  height: 32px;
+  border-radius: 3px;
+  min-width: 6px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.heatmap-block:hover {
+  opacity: 0.7;
+}
+
+.block-nodata {
+  background-color: #3f3f46;
+}
+
+.block-good {
+  background-color: #10b981;
+}
+
+.block-warning {
+  background-color: #eab308;
+}
+
+.block-down {
+  background-color: #ef4444;
+}
+
+.heatmap-legend {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: #a1a1aa;
+}

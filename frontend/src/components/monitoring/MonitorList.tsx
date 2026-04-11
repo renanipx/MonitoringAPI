@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { listMonitors, deleteMonitor, getMonitorStats } from "../../services/api";
 import { Card } from "../ui/Card";
-import { MonitorChart } from "./MonitorChart.tsx";
-import { Trash2, Activity, Globe, Search, Filter, Eye, Pencil } from "lucide-react";
+import { MonitorChart } from "./MonitorChart";
+import { Heatmap } from "./Heatmap";
+import { Trash2, Activity, Globe, Search, Eye, Pencil, Share2 } from "lucide-react";
 import { useToast } from "../ui/Toast";
 
 interface MonitorListProps {
@@ -159,7 +160,6 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
     }).join(" ");
 
     // Determine trend color
-    const lastThree = checks.slice(-3);
     const isUnstable = checks.some(c => !c.is_up);
     const avg = checks.reduce((acc, c) => acc + (c.response_time_ms || 0), 0) / checks.length;
     const variance = checks.reduce((acc, c) => acc + Math.pow((c.response_time_ms || 0) - avg, 2), 0) / checks.length;
@@ -312,6 +312,20 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
                         )}
                         <div className="card-actions">
                           <button
+                            className="action-btn share"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (m.status_page_token) {
+                                window.open(`/status/${m.status_page_token}`, '_blank');
+                              } else {
+                                showToast("No public status token assigned yet.", "error");
+                              }
+                            }}
+                            title="Public Status Page"
+                          >
+                            <Share2 size={16} />
+                          </button>
+                          <button
                             className="action-btn view"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -390,6 +404,7 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
             {stats ? (
               <div className="chart-wrapper">
                 <MonitorChart data={stats.recent_checks} />
+                <Heatmap data={stats.heatmap} />
               </div>
             ) : (
               <div className="loading-stats">Loading stats...</div>

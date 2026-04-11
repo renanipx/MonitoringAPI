@@ -14,6 +14,7 @@ export function MonitorForm({ onSuccess }: MonitorFormProps) {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [interval, setIntervalValue] = useState(5);
+  const [webhookUrl, setWebhookUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,10 +24,11 @@ export function MonitorForm({ onSuccess }: MonitorFormProps) {
     setError(null);
 
     try {
-      await createMonitor(name, url, interval);
+      await createMonitor(name, url, interval, webhookUrl);
       setName("");
       setUrl("");
       setIntervalValue(5);
+      setWebhookUrl("");
       showToast("Monitor created successfully!", "success");
       onSuccess();
     } catch (err) {
@@ -70,10 +72,17 @@ export function MonitorForm({ onSuccess }: MonitorFormProps) {
             <option value={30}>30 min</option>
           </select>
         </div>
+        <Input
+          label="Discord/Slack Webhook URL (Optional)"
+          placeholder="https://discord.com/api/webhooks/..."
+          type="url"
+          value={webhookUrl}
+          onChange={(e) => setWebhookUrl(e.target.value)}
+        />
       </div>
       {error && <p className="error">{error}</p>}
-      <div className="form-actions">
-        <Button type="submit" loading={loading} className="submit-btn">
+      <div className="form-actions mt-4">
+        <Button type="submit" loading={loading} className="submit-btn" style={{marginTop: "1rem"}}>
           <Plus size={18} />
           <span>Create Monitor</span>
         </Button>

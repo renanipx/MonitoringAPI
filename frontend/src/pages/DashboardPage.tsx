@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardDescription, CardTitle } from "../components/ui/Card";
 import { MonitorForm } from "../components/monitoring/MonitorForm";
 import { MonitorList } from "../components/monitoring/MonitorList";
@@ -15,6 +15,13 @@ type DashboardPageProps = {
 
 function DashboardPage({ user, onLogout }: DashboardPageProps) {
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshKey((prev) => prev + 1);
+    }, 15000); // Live poll every 15s
+    return () => clearInterval(interval);
+  }, []);
 
   const handleMonitorAdded = () => {
     setRefreshKey((prev) => prev + 1);

@@ -5,6 +5,7 @@ import { type User, type AuthResponse } from "./types/auth";
 import { currentUser, logout } from "./services/api";
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
+import PublicStatusPage from "./pages/PublicStatusPage";
 import { ToastProvider } from "./components/ui/Toast";
 
 type AuthUser = User;
@@ -54,6 +55,7 @@ function App() {
               )
             }
           />
+          <Route path="/status/:token" element={<PublicStatusPage />} />
         </Routes>
       </BrowserRouter>
     </ToastProvider>

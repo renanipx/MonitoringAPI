@@ -118,10 +118,10 @@ export async function resetPassword(token: string, password: string) {
 }
 
 // Monitors
-export async function createMonitor(name: string, url: string, intervalMinutes: number = 5) {
+export async function createMonitor(name: string, url: string, intervalMinutes: number = 5, webhookUrl?: string) {
   return request<{ monitor: any }>("/monitors", {
     method: "POST",
-    body: JSON.stringify({ name, url, interval_minutes: intervalMinutes }),
+    body: JSON.stringify({ name, url, interval_minutes: intervalMinutes, webhook_url: webhookUrl }),
   });
 }
 
@@ -138,7 +138,13 @@ export async function deleteMonitor(id: string) {
 }
 
 export async function getMonitorStats(id: string) {
-  return request<{ uptime_24h: number; recent_checks: any[] }>(`/monitors/${id}/stats`, {
+  return request<{ uptime_24h: number; recent_checks: any[]; heatmap?: any[] }>(`/monitors/${id}/stats`, {
+    method: "GET",
+  });
+}
+
+export async function getPublicStatus(token: string) {
+  return request<any>(`/public/status/${token}`, {
     method: "GET",
   });
 }
