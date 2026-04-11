@@ -3,12 +3,14 @@ import { listMonitors, deleteMonitor, getMonitorStats } from "../../services/api
 import { Card } from "../ui/Card";
 import { MonitorChart } from "./MonitorChart.tsx";
 import { Trash2, Activity, Globe, Search, Filter, Eye, Pencil } from "lucide-react";
+import { useToast } from "../ui/Toast";
 
 interface MonitorListProps {
   refreshKey: number;
 }
 
 export function MonitorList({ refreshKey }: MonitorListProps) {
+  const { showToast } = useToast();
   const [monitors, setMonitors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,14 +18,54 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
   const [stats, setStats] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "online" | "offline">("all");
+  const [prevStatuses, setPrevStatuses] = useState<Record<string, number>>({});
+  const [animatingIds, setAnimatingIds] = useState<Record<string, string>>({});
 
   async function fetchMonitors() {
     setLoading(true);
     try {
       const data = await listMonitors();
-      setMonitors(data.monitors);
+      const newMonitors = data.monitors;
+      
+      // Detect status changes
+      const newAnims: Record<string, string> = {};
+      newMonitors.forEach((m: any) => {
+        const prevStatus = prevStatuses[m.id];
+        if (prevStatus !== undefined && prevStatus !== m.last_status) {
+          const isNowOffline = m.last_status >= 500 || m.last_status === 0;
+          newAnims[m.id] = isNowOffline ? "status-changing-offline" : "status-changing";
+          
+          if (isNowOffline) {
+            showToast(`Monitor ${m.name} is offline!`, "error");
+          } else if (prevStatus >= 500 || prevStatus === 0) {
+            showToast(`Monitor ${m.name} is back online!`, "success");
+          }
+        }
+      });
+
+      if (Object.keys(newAnims).length > 0) {
+        setAnimatingIds(prev => ({ ...prev, ...newAnims }));
+        setTimeout(() => {
+          setAnimatingIds(prev => {
+            const next = { ...prev };
+            Object.keys(newAnims).forEach(id => delete next[id]);
+            return next;
+          });
+        }, 2000);
+      }
+
+      setMonitors(newMonitors);
+      
+      // Update previous statuses
+      const nextStatuses: Record<string, number> = {};
+      newMonitors.forEach((m: any) => {
+        nextStatuses[m.id] = m.last_status;
+      });
+      setPrevStatuses(nextStatuses);
+
     } catch (err) {
       setError("Failed to load monitors");
+      showToast("Failed to load monitors", "error");
     } finally {
       setLoading(false);
     }
@@ -37,13 +79,14 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
     if (!confirm("Are you sure you want to delete this monitor?")) return;
     try {
       await deleteMonitor(id);
+      showToast("Monitor deleted successfully!", "success");
       fetchMonitors();
       if (selectedMonitor?.id === id) {
         setSelectedMonitor(null);
         setStats(null);
       }
     } catch (err) {
-      alert("Failed to delete monitor");
+      showToast("Failed to delete monitor", "error");
     }
   }
 
@@ -54,7 +97,7 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
       const data = await getMonitorStats(monitor.id);
       setStats(data);
     } catch (err) {
-      alert("Failed to load stats");
+      showToast("Failed to load stats", "error");
     }
   }
 
@@ -246,10 +289,12 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
         ) : (
           filteredMonitors.map((m) => {
             const statusInfo = getStatusInfo(m.last_status);
+            const isOffline = m.last_status >= 500 || m.last_status === 0;
+            const animationClass = animatingIds[m.id] || "";
             return (
               <Card
                 key={m.id}
-                className={`monitor-card ${selectedMonitor?.id === m.id ? "selected" : ""}`}
+                className={`monitor-card ${selectedMonitor?.id === m.id ? "selected" : ""} ${isOffline ? "is-offline" : ""} ${animationClass}`}
                 onClick={() => handleSelect(m)}
               >
                 <div className="monitor-card-body">

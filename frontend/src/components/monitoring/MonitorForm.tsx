@@ -3,12 +3,14 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { createMonitor } from "../../services/api";
 import { Plus } from "lucide-react";
+import { useToast } from "../ui/Toast";
 
 interface MonitorFormProps {
   onSuccess: () => void;
 }
 
 export function MonitorForm({ onSuccess }: MonitorFormProps) {
+  const { showToast } = useToast();
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [interval, setIntervalValue] = useState(5);
@@ -25,9 +27,12 @@ export function MonitorForm({ onSuccess }: MonitorFormProps) {
       setName("");
       setUrl("");
       setIntervalValue(5);
+      showToast("Monitor created successfully!", "success");
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create monitor");
+      const message = err instanceof Error ? err.message : "Failed to create monitor";
+      setError(message);
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
