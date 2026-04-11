@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { MetricsService } from "../services/metrics.service";
-import { authenticate } from "../middleware/auth";
+import { authenticate } from "../middleware/auth.middleware";
 import { MonitorService } from "../services/monitor.service";
 
 const router = Router();

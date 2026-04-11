@@ -2,12 +2,12 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import passport from "./config/passport";
-import authRoutes from "./routes/auth";
-import monitorRoutes from "./routes/monitor";
+import authRoutes from "./routes/auth.routes";
+import monitorRoutes from "./routes/monitor.routes";
 import { metricsRoutes } from "./routes/metrics.routes";
 import publicRoutes from "./routes/public.routes";
 import { env } from "./config/env";
-import { errorHandler } from "./middleware/errorHandler";
+import { errorHandler } from "./middleware/error-handler.middleware";
 import { MonitorWorkerService } from "./services/monitor-worker.service";
 
 const app = express();

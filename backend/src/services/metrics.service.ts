@@ -68,15 +68,17 @@ export class MetricsService {
       )
       SELECT 
         tb.bucket as "time",
-        ROUND(AVG(mc.response_time_ms)) as avg_response_time,
+        COALESCE(ROUND(AVG(mc.response_time_ms)), 0)::int as avg_response_time,
         CASE WHEN COUNT(mc.id) > 0 THEN 
-          (COUNT(mc.id) FILTER (WHERE mc.is_up = true)::float / COUNT(mc.id)) * 100 
-        ELSE 100 END as uptime_percentage
+          ROUND(((COUNT(mc.id) FILTER (WHERE mc.is_up = true)::float / COUNT(mc.id)) * 100)::numeric, 2)::float
+        ELSE 100::float END as uptime_percentage
       FROM time_buckets tb
-      LEFT JOIN monitor_checks mc 
-        ON date_trunc('hour', mc.checked_at) = tb.bucket
-      LEFT JOIN monitors m 
-        ON mc.monitor_id = m.id AND m.user_id = $1
+      LEFT JOIN (
+        SELECT checks.id, checks.response_time_ms, checks.is_up, checks.checked_at
+        FROM monitor_checks checks
+        JOIN monitors m ON checks.monitor_id = m.id
+        WHERE m.user_id = $1
+      ) mc ON date_trunc('hour', mc.checked_at) = tb.bucket
       GROUP BY tb.bucket
       ORDER BY tb.bucket ASC
     `;

@@ -90,9 +90,9 @@ function AuthPage({ onAuthSuccess }: AuthPageProps) {
   return (
     <div className="app">
       <Card>
-        <CardTitle>API Uptime</CardTitle>
+        <CardTitle>Watchdog</CardTitle>
         <CardDescription>
-          Monitor your APIs and get real-time uptime alerts.
+          Monitor your API endpoints and infrastructure.
         </CardDescription>
 
         <div className="tabs">

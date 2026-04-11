@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { getMetricsOverview, listMonitors } from "../services/api";
 import { MonitorForm } from "../components/monitoring/MonitorForm";
 import { MetricPanel } from "../components/monitoring/MetricPanel";
-import { LogOut, LayoutDashboard, Plus, Globe, Activity, ServerCrash, Menu, X } from "lucide-react";
+import { Plus, Globe, Activity, ServerCrash } from "lucide-react";
 import { Card } from "../components/ui/Card";
 import { PageHeader } from "../components/ui/PageHeader";
+import { DashboardLayout } from "../components/layout/DashboardLayout";
 
 type MainDashboardPageProps = {
   user: {
@@ -21,7 +22,6 @@ export default function MainDashboardPage({ user, onLogout }: MainDashboardPageP
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingMonitor, setEditingMonitor] = useState<any>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -49,69 +49,24 @@ export default function MainDashboardPage({ user, onLogout }: MainDashboardPageP
   const offlineMonitors = monitors.filter(m => m.last_status >= 500 || m.last_status === 0).length;
 
   return (
-    <div className="app main-dashboard">
-      {/* Mobile Overlay */}
-      {isMobileMenuOpen && (
-        <div className="mobile-overlay" onClick={() => setIsMobileMenuOpen(false)}></div>
-      )}
-
-      <div className={`dashboard-sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
-        <div className="sidebar-logo">
-          <Activity size={28} className="text-sky-400" />
-          <h2>Watchdog</h2>
-          <button className="mobile-close-btn" onClick={() => setIsMobileMenuOpen(false)}>
-            <X size={24} />
-          </button>
-        </div>
-        <nav className="sidebar-nav">
-          <button 
-            className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('overview'); setIsMobileMenuOpen(false); }}
-          >
-            <LayoutDashboard size={18} /> Overview
-          </button>
-          <button 
-            className={`nav-item ${activeTab === 'monitors' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('monitors'); setIsMobileMenuOpen(false); }}
-          >
-            <Globe size={18} /> Monitors
-          </button>
-          <button 
-            className={`nav-item ${activeTab === 'incidents' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('incidents'); setIsMobileMenuOpen(false); }}
-          >
-            <ServerCrash size={18} /> Incidents
-          </button>
-        </nav>
-        <div className="sidebar-bottom">
-          <div className="user-profile">
-            <div className="user-avatar">{user.email.charAt(0).toUpperCase()}</div>
-            <span className="user-email-truncate">{user.email}</span>
-          </div>
-          <button className="logout-btn" onClick={onLogout} title="Log out">
-            <LogOut size={18} />
-          </button>
-        </div>
-      </div>
-
-      <main className="dashboard-content main-content">
-        <div className="mobile-header">
-          <button className="mobile-menu-btn" onClick={() => setIsMobileMenuOpen(true)}>
-            <Menu size={24} />
-          </button>
-          <h2>Watchdog</h2>
-        </div>
+    <>
+      <DashboardLayout 
+        user={user} 
+        onLogout={onLogout} 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+      >
         <PageHeader 
           title={activeTab === 'overview' ? 'Platform Overview' : activeTab === 'monitors' ? 'Manage Monitors' : 'Recent Incidents'}
           subtitle={activeTab === 'overview' ? 'Real-time metrics and system health' : activeTab === 'monitors' ? 'View and edit your existing monitors' : 'A history of downtimes across your monitors.'}
-          action={
-            <button className="btn-primary" onClick={() => { setEditingMonitor(null); setShowAddModal(true); }}>
-              <Plus size={16} /> Add Monitor
-            </button>
-          }
-        />
+        action={
+          <button className="btn-primary" onClick={() => { setEditingMonitor(null); setShowAddModal(true); }}>
+            <Plus size={16} /> Add Monitor
+          </button>
+        }
+      />
 
-        {loading && monitors.length === 0 ? (
+      {loading && monitors.length === 0 ? (
           <div className="loading-state">Loading dashboard...</div>
         ) : activeTab === 'overview' ? (
           <>
@@ -250,7 +205,7 @@ export default function MainDashboardPage({ user, onLogout }: MainDashboardPageP
           </div>
         )}
 
-      </main>
+    </DashboardLayout>
 
       {showAddModal && (
         <div className="modal-backdrop" onClick={() => setShowAddModal(false)}>
@@ -264,6 +219,6 @@ export default function MainDashboardPage({ user, onLogout }: MainDashboardPageP
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
