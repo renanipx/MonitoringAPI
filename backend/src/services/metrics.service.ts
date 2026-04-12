@@ -61,7 +61,7 @@ export class MetricsService {
     const query = `
       WITH time_buckets AS (
         SELECT generate_series(
-          date_trunc('hour', NOW() - INTERVAL '24 hours'),
+          date_trunc('hour', NOW() - INTERVAL '48 hours'),
           date_trunc('hour', NOW()),
           '1 hour'::interval
         ) AS bucket
@@ -69,6 +69,7 @@ export class MetricsService {
       SELECT 
         tb.bucket as "time",
         COALESCE(ROUND(AVG(mc.response_time_ms)), 0)::int as avg_response_time,
+        COUNT(mc.id)::int as total_checks,
         CASE WHEN COUNT(mc.id) > 0 THEN 
           ROUND(((COUNT(mc.id) FILTER (WHERE mc.is_up = true)::float / COUNT(mc.id)) * 100)::numeric, 2)::float
         ELSE 100::float END as uptime_percentage

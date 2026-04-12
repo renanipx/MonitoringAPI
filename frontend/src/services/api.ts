@@ -138,9 +138,15 @@ export async function listMonitors() {
   });
 }
 
-export async function deleteMonitor(id: string) {
-  return request<void>(`/monitors/${id}`, {
+export async function deleteMonitor(id: string, keepIncidents: boolean = true) {
+  return request<void>(`/monitors/${id}?keepIncidents=${keepIncidents}`, {
     method: "DELETE",
+  });
+}
+
+export async function getRecentIncidents() {
+  return request<{ incidents: any[] }>("/monitors/all/incidents", {
+    method: "GET",
   });
 }
 

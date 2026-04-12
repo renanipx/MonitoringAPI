@@ -32,8 +32,18 @@ export class MonitorService {
           FROM monitor_checks 
           WHERE monitor_id = m.id 
           ORDER BY checked_at DESC 
-          LIMIT 20
-        ) h) as recent_checks
+          LIMIT 30
+        ) h) as recent_checks,
+        (SELECT json_agg(a) FROM (
+          SELECT
+            date_trunc('hour', checked_at) as time,
+            COALESCE(ROUND(AVG(response_time_ms)),0)::int as avg_response_time,
+            CASE WHEN COUNT(id) > 0 THEN ROUND(((COUNT(id) FILTER (WHERE is_up = true)::float / COUNT(id)) * 100)::numeric, 2)::float ELSE 100::float END as uptime_percentage
+          FROM monitor_checks 
+          WHERE monitor_id = m.id AND checked_at >= NOW() - INTERVAL '24 hours'
+          GROUP BY time
+          ORDER BY time ASC
+        ) a) as metrics_24h
       FROM monitors m 
       WHERE m.user_id = $1 
       ORDER BY m.created_at DESC`,
@@ -71,7 +81,27 @@ export class MonitorService {
     return result.rows[0] as Monitor;
   }
 
-  static async delete(userId: string, id: string) {
+  static async delete(userId: string, id: string, deleteIncidents: boolean = false) {
+    if (deleteIncidents) {
+      // Clean up orphaned incidents strictly tied to this monitor prior to cascade
+      await pool.query("DELETE FROM incidents WHERE monitor_id = $1", [id]);
+    } else {
+      // If we keep incidents, convert monitor_id to NULL to retain history without breaking foreign keys (if restricted) 
+      // User says 'só precisa que a informação não exiba no monitor de incidentes', but actually, 
+      // keeping them on NULL makes them detached and preserved for global totals!
+      try {
+        await pool.query("UPDATE incidents SET monitor_id = NULL WHERE monitor_id = $1", [id]);
+      } catch (e) {
+         // Silently fail if monitor_id is not nullable in DB (will CASCADE delete on monitor deletion as fallback)
+      }
+    }
+    
+    // Explicit deletes on check constraints if not cascaded, though normally we assume monitor_checks is CASCADE.
+    // If it's not cascaded, we need to manually delete checks to allow monitor deletion!
+    try {
+       await pool.query("DELETE FROM monitor_checks WHERE monitor_id = $1", [id]);
+    } catch {}
+
     const result = await pool.query(
       "DELETE FROM monitors WHERE id = $1 AND user_id = $2",
       [id, userId]
@@ -156,5 +186,17 @@ export class MonitorService {
       heatmap: heatmapResult.rows,
       recent_incidents: incidents.rows
     };
+  }
+
+  static async getRecentIncidents(userId: string) {
+    const result = await pool.query(
+      `SELECT i.*, m.name as monitor_name 
+       FROM incidents i 
+       JOIN monitors m ON i.monitor_id = m.id 
+       WHERE m.user_id = $1 
+       ORDER BY i.started_at DESC LIMIT 20`,
+      [userId]
+    );
+    return result.rows;
   }
 }

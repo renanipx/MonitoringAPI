@@ -109,17 +109,23 @@ export class MonitorWorkerService {
       try {
         await client.query("BEGIN");
 
+        // Evaluate accurate previous state from database before inserting new
+        const prevCheckRes = await client.query(
+          `SELECT is_up FROM monitor_checks WHERE monitor_id = $1 ORDER BY checked_at DESC LIMIT 1`,
+          [monitor.id]
+        );
+        const previousStatus = (prevCheckRes.rowCount || 0) > 0 ? prevCheckRes.rows[0].is_up : null;
+
         // Insert check
         await client.query(
           `INSERT INTO monitor_checks (monitor_id, status_code, response_time_ms, is_up, error_message) 
            VALUES ($1, $2, $3, $4, $5)`,
           [monitor.id, result.statusCode, result.responseTimeMs, result.isUp, result.errorMessage]
         );
-
-        const previousStatus = monitor.last_status ? (monitor.last_status >= 200 && monitor.last_status < 300) : null;
         
-        // Incident Logic: Down
-        if (!result.isUp && (previousStatus === true || previousStatus === null)) {
+        // Incident Logic: Down (Only on critical failures, >= 400 or timeout)
+        const isCriticalFailure = result.statusCode >= 400 || result.statusCode === 0;
+        if (!result.isUp && (previousStatus === true || previousStatus === null) && isCriticalFailure) {
             const activeIncidents = await client.query(`SELECT id FROM incidents WHERE monitor_id = $1 AND resolved_at IS NULL`, [monitor.id]);
             if (activeIncidents.rowCount === 0) {
                 await client.query(
