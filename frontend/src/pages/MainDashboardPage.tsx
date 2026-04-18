@@ -3,9 +3,11 @@ import { getMetricsOverview, listMonitors, getRecentIncidents, deleteMonitor } f
 import { MonitorForm } from "../components/monitoring/MonitorForm";
 import { MetricPanel } from "../components/monitoring/MetricPanel";
 import { MiniMetricCard } from "../components/monitoring/MiniMetricCard";
-import { Plus, Globe, Activity, ServerCrash, Clock, CheckCircle } from "lucide-react";
-import { ResponsiveContainer, LineChart, Line } from "recharts";
+import { Plus, Globe, Activity, ServerCrash, Clock, CheckCircle, AlertTriangle } from "lucide-react";
+import { ResponsiveContainer, LineChart, Line, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Card } from "../components/ui/Card";
+import { StatusBadge } from "../components/ui/StatusBadge";
+import { MonitorCard } from "../components/monitoring/MonitorCard";
 import { PageHeader } from "../components/ui/PageHeader";
 import { DashboardLayout } from "../components/layout/DashboardLayout";
 
@@ -166,11 +168,11 @@ export default function MainDashboardPage({ user, onLogout }: MainDashboardPageP
               <MiniMetricCard 
                 title="Most Unstable"
                 value={mostUnstableMonitor ? mostUnstableMonitor.name : 'None'}
-                icon={<Activity size={20} color="#a855f7" />}
+                icon={<AlertTriangle size={20} color="#f59e0b" />}
                 trendDirection={mostUnstableMonitor ? 'down' : 'neutral'}
                 trendText={mostUnstableMonitor && mostUnstableMonitor.metrics_24h && mostUnstableMonitor.metrics_24h.length > 0 
-                    ? `Uptime: ${(mostUnstableMonitor.metrics_24h.reduce((acc:any, curr:any) => acc + curr.uptime_percentage, 0) / mostUnstableMonitor.metrics_24h.length).toFixed(2)}%`
-                    : '100% Uptime'
+                    ? `Lowest Uptime in 24h (${(mostUnstableMonitor.metrics_24h.reduce((acc:any, curr:any) => acc + curr.uptime_percentage, 0) / mostUnstableMonitor.metrics_24h.length).toFixed(2)}%)`
+                    : '100% Uptime (last 24h)'
                 }
               />
             </div>
@@ -200,10 +202,7 @@ export default function MainDashboardPage({ user, onLogout }: MainDashboardPageP
                           <tr key={m.id}>
                             <td><strong>{m.name}</strong></td>
                             <td>
-                              <span className={`status-badge ${isUp ? 'status-online' : 'status-offline'}`}>
-                                <span className="status-dot"></span>
-                                {isUp ? 'Online' : 'Offline'}
-                              </span>
+                              <StatusBadge status={isUp ? "ONLINE" : "OFFLINE"} />
                             </td>
                             <td className="text-muted">{m.url}</td>
                             <td>{m.interval_minutes}m</td>
@@ -218,82 +217,16 @@ export default function MainDashboardPage({ user, onLogout }: MainDashboardPageP
             </div>
           </>
         ) : activeTab === 'monitors' ? (
-          <div className="tab-pane monitors-grid mt-4">
-            {monitors.map(m => {
-              const activeInc = incidents.find(i => i.monitor_id === m.id && !i.resolved_at); // Wait, incidents are loaded but may not map exactly to this if not top 20, but it gets top 20 recent. Actually we should compute from `recent_checks`.
-              const isUp = (m.recent_checks && m.recent_checks.length > 0 && m.recent_checks[0] !== null) ? m.recent_checks[0].is_up : m.last_status >= 200 && m.last_status < 300;
-              const mUptime = m.metrics_24h && m.metrics_24h.length > 0 ? (m.metrics_24h.reduce((a:any,b:any) => a + b.uptime_percentage, 0) / m.metrics_24h.length).toFixed(2) : 100;
-              const mAvgResp = m.metrics_24h && m.metrics_24h.length > 0 ? Math.round(m.metrics_24h.reduce((a:any,b:any) => a + b.avg_response_time, 0) / m.metrics_24h.length) : 0;
-              
-              const lastCheck = m.recent_checks && m.recent_checks.length > 0 && m.recent_checks[0] !== null ? m.recent_checks[0] : null;
-
-              // Very naive status duration approach since we lack rigorous status history transition rows
-              let statusDuration = 'Status duration untracked';
-              if (activeInc && !isUp) {
-                const minsOffline = Math.round((Date.now() - new Date(activeInc.started_at).getTime()) / 60000);
-                statusDuration = `Offline for ${minsOffline}m`;
-              } else if (isUp) {
-                statusDuration = `Online`;
-              }
-              
-              return (
-                <Card key={m.id} style={{ display: 'flex', flexDirection: 'column', padding: '1.25rem', gap: '1rem', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '1rem', width: '100%', position: 'relative' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span className={`status-badge ${isUp ? 'status-online' : 'status-offline'}`}>
-                          <span className="status-dot"></span>{isUp ? 'Online' : 'Offline'}
-                        </span>
-                        <strong style={{ fontSize: '1.1rem', color: '#f8fafc' }}>{m.name}</strong>
-                      </div>
-                      <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>{m.url} • {m.interval_minutes}m interval</span>
-                    </div>
-                  </div>
-                  
-                  <div style={{ display: 'flex', gap: '1rem', background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '0.5rem', flexWrap: 'wrap' }}>
-                     <div style={{ flex: 1, minWidth: '120px', position: 'relative' }}>
-                       <div style={{ display: 'flex', justifyContent: 'space-between', zIndex: 2, position: 'relative' }}>
-                         <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', marginBottom: '0.25rem' }}>Avg. Response (24h)</span>
-                         <span style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f8fafc' }}>{mAvgResp}ms</span>
-                       </div>
-                       {m.metrics_24h && m.metrics_24h.length > 0 && (
-                         <div style={{ position: 'absolute', bottom: -10, left: -10, width: 'calc(100% + 20px)', height: '40px', opacity: 0.5, pointerEvents: 'none' }}>
-                            <ResponsiveContainer width="100%" height="100%">
-                              <LineChart data={m.metrics_24h}>
-                                <Line type="monotone" dataKey="avg_response_time" stroke="#38bdf8" strokeWidth={2} dot={false} isAnimationActive={false} />
-                              </LineChart>
-                            </ResponsiveContainer>
-                         </div>
-                       )}
-                     </div>
-                     <div style={{ flex: 1, minWidth: '120px' }}>
-                       <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', marginBottom: '0.25rem' }}>Status Note</span>
-                       <span style={{ fontSize: '0.85rem', color: isUp ? '#4ade80' : '#f87171' }}>
-                         {statusDuration}
-                         {!isUp && lastCheck?.error_message && <><br/>({lastCheck.error_message})</>}
-                       </span>
-                     </div>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
-                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#94a3b8' }}>
-                       <span>Uptime Pipeline (Last 30 checks)</span>
-                       <span style={{color: Number(mUptime) >= 99.0 ? '#4ade80' : '#f87171'}}>{mUptime}% / 24h</span>
-                     </div>
-                     <div style={{ display: 'flex', gap: '2px', height: '24px' }}>
-                        {m.recent_checks && m.recent_checks.slice().reverse().map((chk: any, idx: number) => (
-                           chk !== null && <div key={idx} style={{ flex: 1, backgroundColor: chk.is_up ? '#22c55e' : '#ef4444', borderRadius: '2px', opacity: chk.is_up ? 0.7 : 1, transition: 'all 0.2s', cursor: 'pointer' }} title={`${new Date(chk.checked_at).toLocaleTimeString()} - ${chk.response_time_ms}ms`} />
-                        ))}
-                     </div>
-                  </div>
-                  
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: 'auto', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                    <button className="btn-secondary" style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem' }} onClick={() => { setEditingMonitor(m); setShowAddModal(true); }}>Configure</button>
-                    <button className="btn-secondary" style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }} onClick={() => setMonitorToDelete(m)}>Delete</button>
-                  </div>
-                </Card>
-              )
-            })}
+          <div className="tab-pane monitors-grid mt-4 animate-fade-in">
+            {monitors.map(m => (
+              <MonitorCard 
+                key={m.id} 
+                monitor={m} 
+                incidents={incidents} 
+                onEdit={(mon) => { setEditingMonitor(mon); setShowAddModal(true); }}
+                onDelete={(mon) => setMonitorToDelete(mon)}
+              />
+            ))}
           </div>
         ) : (
           <div className="tab-pane mt-4">
@@ -315,20 +248,28 @@ export default function MainDashboardPage({ user, onLogout }: MainDashboardPageP
                       </tr>
                     </thead>
                     <tbody>
-                      {incidents.map(inc => (
-                        <tr key={inc.id}>
-                          <td><strong>{inc.monitor_name}</strong></td>
-                          <td>
-                            <span className={`status-badge ${inc.resolved_at ? 'status-online' : 'status-offline'}`}>
-                              <span className="status-dot"></span>
-                              {inc.resolved_at ? 'Resolved' : 'Active'}
-                            </span>
-                          </td>
-                          <td>{new Date(inc.started_at).toLocaleString()}</td>
-                          <td>{inc.resolved_at ? new Date(inc.resolved_at).toLocaleString() : 'Ongoing'}</td>
-                          <td className="text-muted" style={{maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}} title={inc.error_details}>{inc.error_details}</td>
-                        </tr>
-                      ))}
+                      {incidents.map(inc => {
+                        const durationMs = inc.resolved_at ? new Date(inc.resolved_at).getTime() - new Date(inc.started_at).getTime() : Date.now() - new Date(inc.started_at).getTime();
+                        const durationMin = Math.round(durationMs / 60000);
+                        const durationStr = durationMin > 60 ? `${Math.floor(durationMin / 60)}h ${durationMin % 60}m` : `${durationMin}m`;
+
+                        return (
+                          <tr key={inc.id}>
+                            <td><strong>{inc.monitor_name}</strong></td>
+                            <td>
+                              <StatusBadge 
+                                status={inc.resolved_at ? "ONLINE" : "ACTIVE"} 
+                                label={inc.resolved_at ? "Resolved" : "Active"} 
+                              />
+                            </td>
+                            <td>{new Date(inc.started_at).toLocaleString()}</td>
+                            <td className={inc.resolved_at ? "text-muted" : "text-red"}>
+                              {inc.resolved_at ? `Duration: ${durationStr}` : `Ongoing (${durationStr})`}
+                            </td>
+                            <td className="text-muted" style={{maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}} title={inc.error_details}>{inc.error_details}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

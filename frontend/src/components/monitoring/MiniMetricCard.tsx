@@ -30,7 +30,7 @@ export function MiniMetricCard({
   chartColor = "#38bdf8",
   chartType = 'area'
 }: MiniMetricCardProps) {
-  
+
   const getTrendIcon = () => {
     if (trendDirection === 'up') return <ArrowUpRight size={14} />;
     if (trendDirection === 'down') return <ArrowDownRight size={14} />;
@@ -38,25 +38,25 @@ export function MiniMetricCard({
   };
 
   return (
-    <Card className="kpi-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column' }}>
-      <div className="kpi-header" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-        <div className="kpi-label" style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 600 }}>{title}</div>
-        <div className="kpi-icon-wrapper" style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: 8 }}>{icon}</div>
+    <Card className="kpi-card">
+      <div className="kpi-header">
+        <div className="kpi-label">{title}</div>
+        <div className="kpi-icon-wrapper">{icon}</div>
       </div>
-      
-      <div className="kpi-info" style={{ zIndex: 2, marginTop: '0.5rem' }}>
-        <div className="kpi-value" style={{ fontSize: '1.75rem', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'baseline', gap: '0.2rem' }}>
-          {value}{unit && <span style={{fontSize: '1rem', color: '#94a3b8'}}>{unit}</span>}
+
+      <div className="kpi-info">
+        <div className="kpi-value">
+          {value}{unit && <span className="kpi-unit">{unit}</span>}
         </div>
-        
+
         {(trendValue || trendText) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+          <div className="kpi-trend-row">
             {trendValue && (
-              <span className={`kpi-trend ${trendDirection === 'up' ? 'positive' : trendDirection === 'down' ? 'negative' : 'neutral'}`} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem', padding: '0.15rem 0.4rem', borderRadius: '0.25rem', background: trendDirection === 'up' ? 'rgba(34,197,94,0.1)' : trendDirection === 'down' ? 'rgba(239,68,68,0.1)' : 'rgba(148,163,184,0.1)', color: trendDirection === 'up' ? '#4ade80' : trendDirection === 'down' ? '#f87171' : '#94a3b8' }}>
+              <span className={`kpi-trend ${trendDirection === 'up' ? 'positive' : trendDirection === 'down' ? 'negative' : 'neutral'}`}>
                 {getTrendIcon()} {trendValue}
               </span>
             )}
-            <span className="kpi-subtext" style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>{trendText}</span>
+            <span className="kpi-subtext">{trendText}</span>
           </div>
         )}
       </div>
@@ -68,8 +68,8 @@ export function MiniMetricCard({
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id={`gradient-${chartDataKey}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={chartColor} stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor={chartColor} stopOpacity={0}/>
+                    <stop offset="5%" stopColor={chartColor} stopOpacity={0.8} />
+                    <stop offset="95%" stopColor={chartColor} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <Area type="monotone" dataKey={chartDataKey} stroke={chartColor} fillOpacity={1} fill={`url(#gradient-${chartDataKey})`} strokeWidth={2} isAnimationActive={false} />

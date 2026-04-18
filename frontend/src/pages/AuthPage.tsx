@@ -95,7 +95,8 @@ function AuthPage({ onAuthSuccess }: AuthPageProps) {
           Monitor your API endpoints and infrastructure.
         </CardDescription>
 
-        <div className="tabs">
+        <div className={`tabs ${mode === 'register' ? 'is-register' : ''}`}>
+          <div className="tab-indicator"></div>
           <button
             type="button"
             className={mode === "login" ? "active" : ""}
@@ -112,117 +113,126 @@ function AuthPage({ onAuthSuccess }: AuthPageProps) {
           </button>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className={mode === "register" ? "form form-register" : "form"}
-        >
-          {mode === "login" && (
-            <div className="social-row">
-              <GoogleLoginButton onClick={handleGoogleLogin} loading={loading} />
-            </div>
-          )}
+        <form onSubmit={handleSubmit} className="form">
+          <div className="social-row">
+            <GoogleLoginButton onClick={handleGoogleLogin} loading={loading} />
+          </div>
 
-          <Divider>{mode === "login" ? "or" : ""}</Divider>
+          <div className={`morph-group ${mode === 'login' ? 'morph-visible' : 'morph-hidden'}`}>
+             <Divider>or</Divider>
+          </div>
 
-          <label>
-            Email
+          <div className="input-group">
+            <label htmlFor="email">Email</label>
             <input
+              id="email"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
+              placeholder="name@company.com"
               required
+              disabled={loading}
+              className={error ? "input-error" : ""}
             />
-          </label>
-
-          <label htmlFor="password-input">Password</label>
-          <div className="password-wrapper">
-            <input
-              id="password-input"
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              minLength={6}
-              required
-              className="password-input"
-            />
-            <button
-              type="button"
-              className="password-toggle"
-              onClick={() => setShowPassword((prev) => !prev)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? (
-                <svg className="password-toggle-icon password-toggle-icon-on" viewBox="0 0 24 24">
-                  <path d="M3 3l18 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  <path d="M10.477 10.485A3 3 0 0013.5 13.5m-1.5 4.5c4.97 0 7.73-2.074 9.01-4.507A4.2 4.2 0 0021 12c0-.903-.336-1.734-.99-2.493C18.73 7.074 15.97 5 11 5c-1.044 0-1.998.102-2.87.293" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                  <path d="M6.228 6.228C4.63 7.207 3.51 8.46 2.99 9.507A4.2 4.2 0 002 12c0 .903.336 1.734.99 2.493C4.27 16.926 7.03 19 12 19c1.217 0 2.316-.132 3.298-.39" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                </svg>
-              ) : (
-                <svg className="password-toggle-icon" viewBox="0 0 24 24">
-                  <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" fill="none" />
-                </svg>
-              )}
-            </button>
-          </div>
-          <div className="forgot-inline-row">
-            {mode === "login" ? (
-              <span
-                role="button"
-                tabIndex={0}
-                className="forgot-password-inline"
-                onClick={() => setForgotOpen(true)}
-                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setForgotOpen(true)}
-              >
-                Forgot your password?
-              </span>
-            ) : null}
           </div>
 
-          {mode === "register" && (
-            <div>
-              <label>
-                Confirm password
-                <div className="password-wrapper">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
-                    minLength={6}
-                    required
-                    className="password-input"
-                  />
-                  <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? (
-                      <svg className="password-toggle-icon password-toggle-icon-on" viewBox="0 0 24 24">
-                        <path d="M3 3l18 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                        <path d="M10.477 10.485A3 3 0 0013.5 13.5m-1.5 4.5c4.97 0 7.73-2.074 9.01-4.507A4.2 4.2 0 0021 12c0-.903-.336-1.734-.99-2.493C18.73 7.074 15.97 5 11 5c-1.044 0-1.998.102-2.87.293" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                        <path d="M6.228 6.228C4.63 7.207 3.51 8.46 2.99 9.507A4.2 4.2 0 002 12c0 .903.336 1.734.99 2.493C4.27 16.926 7.03 19 12 19c1.217 0 2.316-.132 3.298-.39" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                      </svg>
-                    ) : (
-                      <svg className="password-toggle-icon" viewBox="0 0 24 24">
-                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" fill="none" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              </label>
+          <div className="input-group">
+            <div className="label-row">
+              <label htmlFor="password-input">Password</label>
+              <div className={`morph-group ${mode === 'login' ? 'morph-visible' : 'morph-hidden'}`} style={{display: 'inline'}}>
+                <button
+                  type="button"
+                  className="forgot-password-link"
+                  onClick={() => setForgotOpen(true)}
+                  tabIndex={mode === 'login' ? 0 : -1}
+                >
+                  Forgot password?
+                </button>
+              </div>
             </div>
-          )}
-
-          <div className={passwordStrength ? `password-strength password-strength-${passwordStrength.toLowerCase()}` : "password-strength ghost-row"}>
-            {passwordStrength ? `Password strength: ${passwordStrength}` : "placeholder"}
+            <div className="password-wrapper">
+              <input
+                id="password-input"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="••••••••"
+                minLength={6}
+                required
+                disabled={loading}
+                className={`password-input ${error ? "input-error" : ""}`}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                disabled={loading}
+              >
+                {showPassword ? (
+                  <svg className="password-toggle-icon password-toggle-icon-on" viewBox="0 0 24 24">
+                    <path d="M3 3l18 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                    <path d="M10.477 10.485A3 3 0 0013.5 13.5m-1.5 4.5c4.97 0 7.73-2.074 9.01-4.507A4.2 4.2 0 0021 12c0-.903-.336-1.734-.99-2.493C18.73 7.074 15.97 5 11 5c-1.044 0-1.998.102-2.87.293" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                    <path d="M6.228 6.228C4.63 7.207 3.51 8.46 2.99 9.507A4.2 4.2 0 002 12c0 .903.336 1.734.99 2.493C4.27 16.926 7.03 19 12 19c1.217 0 2.316-.132 3.298-.39" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                  </svg>
+                ) : (
+                  <svg className="password-toggle-icon" viewBox="0 0 24 24">
+                    <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" fill="none" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
 
-          {error && <p className="error">{error}</p>}
+          <div className={`input-group morph-group ${mode === 'register' ? 'morph-visible' : 'morph-hidden'}`}>
+            <label htmlFor="confirm-password">Confirm password</label>
+            <div className="password-wrapper">
+              <input
+                id="confirm-password"
+                type={showPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                placeholder="••••••••"
+                minLength={6}
+                required={mode === 'register'}
+                disabled={loading}
+                className={`password-input ${error ? "input-error" : ""}`}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                disabled={loading}
+              >
+                {showPassword ? (
+                  <svg className="password-toggle-icon password-toggle-icon-on" viewBox="0 0 24 24">
+                    <path d="M3 3l18 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                    <path d="M10.477 10.485A3 3 0 0013.5 13.5m-1.5 4.5c4.97 0 7.73-2.074 9.01-4.507A4.2 4.2 0 0021 12c0-.903-.336-1.734-.99-2.493C18.73 7.074 15.97 5 11 5c-1.044 0-1.998.102-2.87.293" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                    <path d="M6.228 6.228C4.63 7.207 3.51 8.46 2.99 9.507A4.2 4.2 0 002 12c0 .903.336 1.734.99 2.493C4.27 16.926 7.03 19 12 19c1.217 0 2.316-.132 3.298-.39" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                  </svg>
+                ) : (
+                  <svg className="password-toggle-icon" viewBox="0 0 24 24">
+                    <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" fill="none" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
 
-          <Button type="submit" loading={loading}>
+          <div className={`password-strength morph-group ${mode === 'register' ? 'morph-visible' : 'morph-hidden'}`}>
+            <div className={passwordStrength ? `password-strength-${passwordStrength.toLowerCase()}` : "ghost-row"}>
+              {passwordStrength ? `Password strength: ${passwordStrength}` : "placeholder"}
+            </div>
+          </div>
+
+          <div className="error-container" style={{ minHeight: mode === "login" ? "40px" : "0", marginTop: "0.5rem" }}>
+            {error && <div className="error-message animate-shake">{error}</div>}
+          </div>
+
+          <Button type="submit" loading={loading} className="submit-btn-glow">
             {mode === "login" ? "Log in" : "Create free account"}
           </Button>
         </form>

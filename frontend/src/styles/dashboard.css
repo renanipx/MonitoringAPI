@@ -23,6 +23,7 @@
   flex-direction: column;
   flex-shrink: 0;
   height: 100%;
+  z-index: 20;
 }
 
 .sidebar-logo {
@@ -218,6 +219,13 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
   position: relative;
   overflow: hidden;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.3) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3) !important;
 }
 
 .kpi-icon-wrapper {
@@ -245,10 +253,24 @@
 }
 
 .kpi-label {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #94a3b8;
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 0.25rem;
+}
+
+.kpi-unit {
+  font-size: 1rem;
+  color: #94a3b8;
+  margin-left: 0.25rem;
+  font-weight: 400;
+}
+
+.kpi-trend-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .kpi-value {
@@ -306,6 +328,172 @@
 }
 @media (min-width: 1400px) { /* Changed from 1024px to 1400px since 3 columns might need width to not clip text in sparkline charts */
   .monitors-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Monitor Card Refined Styles */
+.monitor-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem !important;
+  gap: 1.25rem;
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 1.25rem !important;
+  width: 100%;
+  position: relative;
+  transition: all var(--transition-normal);
+}
+
+.monitor-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.monitor-card-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.monitor-card-status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.monitor-name {
+  font-size: 1.15rem;
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.monitor-url-subtitle {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.monitor-card-stats-grid {
+  display: flex;
+  gap: 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 1rem;
+  border-radius: 0.75rem;
+  flex-wrap: wrap;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.monitor-stat-item {
+  flex: 1;
+  min-width: 140px;
+  position: relative;
+}
+
+.monitor-stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+
+.monitor-stat-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.monitor-stat-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.monitor-card-mini-chart {
+  height: 40px;
+  width: 100%;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.monitor-stat-duration {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.error-small {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  font-weight: 400;
+}
+
+.monitor-uptime-pipeline-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.monitor-pipeline-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.uptime-pipeline-grid {
+  display: flex;
+  gap: 3px;
+  height: 28px;
+}
+
+.uptime-bar {
+  flex: 1;
+  border-radius: 3px;
+  transition: all var(--transition-fast);
+  cursor: help;
+}
+
+.uptime-bar.up {
+  background-color: var(--status-online);
+  opacity: 0.6;
+}
+
+.uptime-bar.up:hover {
+  opacity: 1;
+  transform: scaleY(1.1);
+}
+
+.uptime-bar.down {
+  background-color: var(--status-offline);
+  opacity: 1;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.monitor-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-danger-outline {
+  color: #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.2) !important;
+}
+
+.btn-danger-outline:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.85rem !important;
+  font-size: 0.85rem !important;
 }
 
 .panel-col-span-2 {

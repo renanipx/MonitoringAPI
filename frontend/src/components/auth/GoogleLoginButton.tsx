@@ -15,7 +15,7 @@ export function GoogleLoginButton({ onClick, loading }: GoogleLoginButtonProps) 
       disabled={loading}
     >
       <span className="social-icon">G</span>
-      <span>Sign in with Google</span>
+      <span>Continue with Google</span>
     </Button>
   );
 }
