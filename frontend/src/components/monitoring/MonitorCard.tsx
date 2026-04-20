@@ -44,11 +44,12 @@ export function MonitorCard({ monitor, incidents, onEdit, onDelete }: MonitorCar
       <div className="monitor-card-header">
         <div className="monitor-card-title-group">
           <div className="monitor-card-status-row">
-            <StatusBadge status={statusType} label={isUp ? "Online" : "Offline"} />
+            <StatusBadge status={statusType} label={isUp ? "Online" : "Offline"} showDot={false} />
             <strong className="monitor-name">{m.name}</strong>
           </div>
-          <span className="monitor-url-subtitle">{m.url} • {m.interval_minutes}m interval</span>
+          <span className="monitor-url-subtitle">{m.url}</span>
         </div>
+        <div className="monitor-interval-badge">{m.interval_minutes}m</div>
       </div>
       
       <div className="monitor-card-stats-grid">
@@ -77,10 +78,12 @@ export function MonitorCard({ monitor, incidents, onEdit, onDelete }: MonitorCar
       </div>
 
       <div className="monitor-uptime-pipeline-section">
-         <div className="monitor-pipeline-header">
-           <span>Uptime Pipeline (Last 30 checks)</span>
-           <span className={Number(mUptime) >= 99.0 ? "text-green" : "text-red"}>{mUptime}% / 24h</span>
-         </div>
+          <div className="monitor-pipeline-header">
+            <span>Uptime Pipeline <small>(Last 30 checks)</small></span>
+            <span className={Number(mUptime) >= 99.0 ? "text-green" : "text-red"}>
+               <strong>{mUptime}%</strong>
+            </span>
+          </div>
          <div className="uptime-pipeline-grid">
             {m.recent_checks && m.recent_checks.slice().reverse().map((chk: any, idx: number) => (
                chk !== null && (

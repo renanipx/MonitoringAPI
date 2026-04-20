@@ -119,7 +119,7 @@ function AuthPage({ onAuthSuccess }: AuthPageProps) {
           </div>
 
           <div className={`morph-group ${mode === 'login' ? 'morph-visible' : 'morph-hidden'}`}>
-             <Divider>or</Divider>
+            <Divider>or</Divider>
           </div>
 
           <div className="input-group">
@@ -139,7 +139,7 @@ function AuthPage({ onAuthSuccess }: AuthPageProps) {
           <div className="input-group">
             <div className="label-row">
               <label htmlFor="password-input">Password</label>
-              <div className={`morph-group ${mode === 'login' ? 'morph-visible' : 'morph-hidden'}`} style={{display: 'inline'}}>
+              <div className={`morph-group ${mode === 'login' ? 'morph-visible' : 'morph-hidden'}`}>
                 <button
                   type="button"
                   className="forgot-password-link"
@@ -232,8 +232,10 @@ function AuthPage({ onAuthSuccess }: AuthPageProps) {
             {error && <div className="error-message animate-shake">{error}</div>}
           </div>
 
-          <Button type="submit" loading={loading} className="submit-btn-glow">
-            {mode === "login" ? "Log in" : "Create free account"}
+          <Button type="submit" loading={loading} className="submit-btn-glow submit-btn-auth">
+            <span className="btn-text-content">
+              {mode === "login" ? "Log in" : "Create account"}
+            </span>
           </Button>
         </form>
       </Card>

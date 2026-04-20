@@ -187,7 +187,7 @@ export default function MainDashboardPage({ user, onLogout }: MainDashboardPageP
                     <thead>
                       <tr>
                         <th>Name</th>
-                        <th>Status</th>
+                        <th className="text-center">Status</th>
                         <th>Target</th>
                         <th>Interval</th>
                         <th>Last Check</th>
@@ -201,7 +201,7 @@ export default function MainDashboardPage({ user, onLogout }: MainDashboardPageP
                         return (
                           <tr key={m.id}>
                             <td><strong>{m.name}</strong></td>
-                            <td>
+                            <td className="text-center">
                               <StatusBadge status={isUp ? "ONLINE" : "OFFLINE"} />
                             </td>
                             <td className="text-muted">{m.url}</td>
@@ -241,7 +241,7 @@ export default function MainDashboardPage({ user, onLogout }: MainDashboardPageP
                     <thead>
                       <tr>
                         <th>Monitor</th>
-                        <th>Status</th>
+                        <th className="text-center">Status</th>
                         <th>Started At</th>
                         <th>Resolved At</th>
                         <th>Details</th>
@@ -256,7 +256,7 @@ export default function MainDashboardPage({ user, onLogout }: MainDashboardPageP
                         return (
                           <tr key={inc.id}>
                             <td><strong>{inc.monitor_name}</strong></td>
-                            <td>
+                            <td className="text-center">
                               <StatusBadge 
                                 status={inc.resolved_at ? "ONLINE" : "ACTIVE"} 
                                 label={inc.resolved_at ? "Resolved" : "Active"} 
