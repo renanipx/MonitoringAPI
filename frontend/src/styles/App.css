@@ -259,12 +259,9 @@
   pointer-events: none;
 }
 
-/* Morphing Transitions */
+/* Morphing Transitions - Instant and stable */
 .morph-group {
-  transition: opacity var(--transition-instant),
-    visibility var(--transition-instant),
-    transform var(--transition-instant),
-    max-height var(--transition-instant);
+  transition: opacity var(--transition-instant);
   overflow: hidden;
 }
 
@@ -273,14 +270,12 @@
   visibility: hidden;
   max-height: 0;
   pointer-events: none;
-  transform: translateY(-4px);
 }
 
 .morph-visible {
   opacity: 1;
   visibility: visible;
-  max-height: 500px; /* Large enough for any group */
-  transform: translateY(0);
+  max-height: none;
 }
 
 .submit-btn-auth {

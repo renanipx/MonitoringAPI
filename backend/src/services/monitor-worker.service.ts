@@ -62,7 +62,7 @@ export class MonitorWorkerService {
         timeout: 10000,
         validateStatus: () => true,
       });
-      
+
       let isUp = false;
       if (expectedStatusCode) {
         isUp = response.status === expectedStatusCode;
@@ -70,9 +70,9 @@ export class MonitorWorkerService {
         isUp = response.status >= 200 && response.status < 300;
       }
 
-      return { 
-        statusCode: response.status, 
-        responseTimeMs: Date.now() - start, 
+      return {
+        statusCode: response.status,
+        responseTimeMs: Date.now() - start,
         isUp,
         errorMessage: null
       };
@@ -122,33 +122,33 @@ export class MonitorWorkerService {
            VALUES ($1, $2, $3, $4, $5)`,
           [monitor.id, result.statusCode, result.responseTimeMs, result.isUp, result.errorMessage]
         );
-        
+
         // Incident Logic: Down (Only on critical failures, >= 400 or timeout)
         const isCriticalFailure = result.statusCode >= 400 || result.statusCode === 0;
         if (!result.isUp && (previousStatus === true || previousStatus === null) && isCriticalFailure) {
-            const activeIncidents = await client.query(`SELECT id FROM incidents WHERE monitor_id = $1 AND resolved_at IS NULL`, [monitor.id]);
-            if (activeIncidents.rowCount === 0) {
-                await client.query(
-                    `INSERT INTO incidents (monitor_id, started_at, error_details) VALUES ($1, NOW(), $2)`,
-                    [monitor.id, result.errorMessage || `HTTP ${result.statusCode}`]
-                );
-                if (monitor.webhook_url) {
-                    await this.fireWebhook(monitor.webhook_url, monitor.name, false, result.errorMessage || `HTTP ${result.statusCode}`);
-                }
+          const activeIncidents = await client.query(`SELECT id FROM incidents WHERE monitor_id = $1 AND resolved_at IS NULL`, [monitor.id]);
+          if (activeIncidents.rowCount === 0) {
+            await client.query(
+              `INSERT INTO incidents (monitor_id, started_at, error_details) VALUES ($1, NOW(), $2)`,
+              [monitor.id, result.errorMessage || `HTTP ${result.statusCode}`]
+            );
+            if (monitor.webhook_url) {
+              await this.fireWebhook(monitor.webhook_url, monitor.name, false, result.errorMessage || `HTTP ${result.statusCode}`);
             }
-        } 
-        // Incident Logic: Up
-        else if (result.isUp && previousStatus === false) {
-            const activeIncidents = await client.query(`SELECT id FROM incidents WHERE monitor_id = $1 AND resolved_at IS NULL`, [monitor.id]);
-            if ((activeIncidents.rowCount || 0) > 0) {
-                await client.query(
-                    `UPDATE incidents SET resolved_at = NOW() WHERE id = $1`,
-                    [activeIncidents.rows[0].id]
-                );
-                if (monitor.webhook_url) {
-                    await this.fireWebhook(monitor.webhook_url, monitor.name, true);
-                }
+          }
+        }
+        // Incident Logic: Up (Resolve any active incident if monitor is back UP)
+        else if (result.isUp) {
+          const activeIncidents = await client.query(`SELECT id FROM incidents WHERE monitor_id = $1 AND resolved_at IS NULL`, [monitor.id]);
+          if ((activeIncidents.rowCount || 0) > 0) {
+            await client.query(
+              `UPDATE incidents SET resolved_at = NOW() WHERE id = $1`,
+              [activeIncidents.rows[0].id]
+            );
+            if (monitor.webhook_url) {
+              await this.fireWebhook(monitor.webhook_url, monitor.name, true);
             }
+          }
         }
 
         // Update monitor status
@@ -172,24 +172,24 @@ export class MonitorWorkerService {
   }
 
   private static async fireWebhook(url: string, monitorName: string, isUp: boolean, errorDetails?: string) {
-      try {
-          const color = isUp ? 3066993 : 15158332; 
-          const title = isUp ? `✅ ${monitorName} is back UP` : `🚨 ${monitorName} is DOWN`;
-          const description = isUp ? "Service has been restored." : `Error: ${errorDetails}`;
-          
-          const payload = {
-              username: "Watchdog Alerts",
-              embeds: [{
-                  title,
-                  description,
-                  color,
-                  timestamp: new Date().toISOString()
-              }]
-          };
-          
-          await axios.post(url, payload, { timeout: 5000 });
-      } catch (err) {
-          console.error(`Failed to fire webhook for ${monitorName}:`, err);
-      }
+    try {
+      const color = isUp ? 3066993 : 15158332;
+      const title = isUp ? `✅ ${monitorName} is back UP` : `🚨 ${monitorName} is DOWN`;
+      const description = isUp ? "Service has been restored." : `Error: ${errorDetails}`;
+
+      const payload = {
+        username: "Watchdog Alerts",
+        embeds: [{
+          title,
+          description,
+          color,
+          timestamp: new Date().toISOString()
+        }]
+      };
+
+      await axios.post(url, payload, { timeout: 5000 });
+    } catch (err) {
+      console.error(`Failed to fire webhook for ${monitorName}:`, err);
+    }
   }
 }
