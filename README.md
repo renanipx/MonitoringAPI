@@ -100,6 +100,6 @@ This project is licensed under the ISC License.
 
 ## Author
 
-Developed by Renan Campos Cavalcanti
-GitHub: https://github.com/renanipx/
-LinkedIn: https://www.linkedin.com/in/renanccavalcanti/
+- Developed by Renan Campos Cavalcanti
+- GitHub: https://github.com/renanipx/
+- LinkedIn: https://www.linkedin.com/in/renanccavalcanti/
