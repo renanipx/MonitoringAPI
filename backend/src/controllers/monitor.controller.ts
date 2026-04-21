@@ -5,7 +5,7 @@ import { AppError } from "../errors/AppError";
 export class MonitorController {
   static async create(req: Request, res: Response, next: NextFunction) {
     try {
-      const { name, url, interval_minutes } = req.body;
+      const { name, url, interval_minutes, webhook_url, method, expected_status_code } = req.body;
       const userId = req.user?.id;
       if (!userId) throw new AppError("Unauthorized", 401);
 
@@ -13,7 +13,7 @@ export class MonitorController {
         throw new AppError("Name and URL are required", 400);
       }
 
-      const monitor = await MonitorService.create(userId, name, url, interval_minutes);
+      const monitor = await MonitorService.create(userId, name, url, interval_minutes, webhook_url, method, expected_status_code);
       return res.status(201).json({ monitor });
     } catch (error) {
       next(error);
@@ -62,9 +62,10 @@ export class MonitorController {
     try {
       const userId = req.user?.id;
       const id = req.params.id as string;
+      const deleteIncidents = req.query.keepIncidents === 'false'; 
       if (!userId) throw new AppError("Unauthorized", 401);
 
-      await MonitorService.delete(userId, id);
+      await MonitorService.delete(userId, id, deleteIncidents);
       return res.status(204).end();
     } catch (error) {
       next(error);
@@ -82,6 +83,18 @@ export class MonitorController {
 
       const stats = await MonitorService.getStats(userId, id);
       return res.json(stats);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getRecentIncidents(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) throw new AppError("Unauthorized", 401);
+
+      const incidents = await MonitorService.getRecentIncidents(userId);
+      return res.json({ incidents });
     } catch (error) {
       next(error);
     }

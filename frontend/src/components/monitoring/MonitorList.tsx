@@ -1,27 +1,72 @@
 import { useEffect, useState } from "react";
 import { listMonitors, deleteMonitor, getMonitorStats } from "../../services/api";
 import { Card } from "../ui/Card";
-import { MonitorChart } from "./MonitorChart.tsx";
-import { Trash2, Activity, Globe } from "lucide-react";
+import { MonitorChart } from "./MonitorChart";
+import { Heatmap } from "./Heatmap";
+import { Trash2, Activity, Globe, Search, Eye, Pencil, Share2 } from "lucide-react";
+import { useToast } from "../ui/Toast";
 
 interface MonitorListProps {
   refreshKey: number;
 }
 
 export function MonitorList({ refreshKey }: MonitorListProps) {
+  const { showToast } = useToast();
   const [monitors, setMonitors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedMonitor, setSelectedMonitor] = useState<any | null>(null);
   const [stats, setStats] = useState<any | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "online" | "offline">("all");
+  const [prevStatuses, setPrevStatuses] = useState<Record<string, number>>({});
+  const [animatingIds, setAnimatingIds] = useState<Record<string, string>>({});
 
   async function fetchMonitors() {
     setLoading(true);
     try {
       const data = await listMonitors();
-      setMonitors(data.monitors);
+      const newMonitors = data.monitors;
+      
+      // Detect status changes
+      const newAnims: Record<string, string> = {};
+      newMonitors.forEach((m: any) => {
+        const prevStatus = prevStatuses[m.id];
+        if (prevStatus !== undefined && prevStatus !== m.last_status) {
+          const isNowOffline = m.last_status >= 500 || m.last_status === 0;
+          newAnims[m.id] = isNowOffline ? "status-changing-offline" : "status-changing";
+          
+          if (isNowOffline) {
+            showToast(`Monitor ${m.name} is offline!`, "error");
+          } else if (prevStatus >= 500 || prevStatus === 0) {
+            showToast(`Monitor ${m.name} is back online!`, "success");
+          }
+        }
+      });
+
+      if (Object.keys(newAnims).length > 0) {
+        setAnimatingIds(prev => ({ ...prev, ...newAnims }));
+        setTimeout(() => {
+          setAnimatingIds(prev => {
+            const next = { ...prev };
+            Object.keys(newAnims).forEach(id => delete next[id]);
+            return next;
+          });
+        }, 2000);
+      }
+
+      setMonitors(newMonitors);
+      
+      // Update previous statuses
+      const nextStatuses: Record<string, number> = {};
+      newMonitors.forEach((m: any) => {
+        nextStatuses[m.id] = m.last_status;
+      });
+      setPrevStatuses(nextStatuses);
+
     } catch (err) {
       setError("Failed to load monitors");
+      showToast("Failed to load monitors", "error");
     } finally {
       setLoading(false);
     }
@@ -35,13 +80,14 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
     if (!confirm("Are you sure you want to delete this monitor?")) return;
     try {
       await deleteMonitor(id);
+      showToast("Monitor deleted successfully!", "success");
       fetchMonitors();
       if (selectedMonitor?.id === id) {
         setSelectedMonitor(null);
         setStats(null);
       }
     } catch (err) {
-      alert("Failed to delete monitor");
+      showToast("Failed to delete monitor", "error");
     }
   }
 
@@ -52,7 +98,7 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
       const data = await getMonitorStats(monitor.id);
       setStats(data);
     } catch (err) {
-      alert("Failed to load stats");
+      showToast("Failed to load stats", "error");
     }
   }
 
@@ -114,7 +160,6 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
     }).join(" ");
 
     // Determine trend color
-    const lastThree = checks.slice(-3);
     const isUnstable = checks.some(c => !c.is_up);
     const avg = checks.reduce((acc, c) => acc + (c.response_time_ms || 0), 0) / checks.length;
     const variance = checks.reduce((acc, c) => acc + Math.pow((c.response_time_ms || 0) - avg, 2), 0) / checks.length;
@@ -140,18 +185,116 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
   if (loading && monitors.length === 0) return <div className="loading">Loading monitors...</div>;
   if (error) return <div className="error">{error}</div>;
 
+  const totalMonitors = monitors.length;
+  const onlineMonitors = monitors.filter(m => m.last_status >= 200 && m.last_status < 300).length;
+  const offlineMonitors = monitors.filter(m => m.last_status >= 500 || m.last_status === 0).length;
+  const avgResponseTime = monitors.length > 0 
+    ? Math.round(monitors.reduce((acc, m) => acc + (m.last_response_time_ms || 0), 0) / monitors.length) 
+    : 0;
+
+  const filteredMonitors = monitors.filter(m => {
+    const matchesSearch = 
+      m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      m.url.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const isOnline = m.last_status >= 200 && m.last_status < 300;
+    const isOffline = m.last_status >= 500 || m.last_status === 0;
+
+    if (statusFilter === "online") return matchesSearch && isOnline;
+    if (statusFilter === "offline") return matchesSearch && isOffline;
+    return matchesSearch;
+  });
+
   return (
     <div className="monitor-container">
+      <div className="dashboard-summary">
+        <Card className="summary-card">
+          <div className="summary-icon total">
+            <Globe size={20} />
+          </div>
+          <div className="summary-info">
+            <span className="summary-label">Total</span>
+            <span className="summary-value">{totalMonitors}</span>
+          </div>
+        </Card>
+        <Card className="summary-card">
+          <div className="summary-icon online">
+            <Activity size={20} />
+          </div>
+          <div className="summary-info">
+            <span className="summary-label">Online</span>
+            <span className="summary-value text-green">{onlineMonitors}</span>
+          </div>
+        </Card>
+        <Card className="summary-card">
+          <div className="summary-icon offline">
+            <Activity size={20} />
+          </div>
+          <div className="summary-info">
+            <span className="summary-label">Offline</span>
+            <span className="summary-value text-red">{offlineMonitors}</span>
+          </div>
+        </Card>
+        <Card className="summary-card">
+          <div className="summary-icon avg">
+            <Activity size={20} />
+          </div>
+          <div className="summary-info">
+            <span className="summary-label">Avg. Response</span>
+            <span className="summary-value">{avgResponseTime}ms</span>
+          </div>
+        </Card>
+      </div>
+
+      <div className="filter-bar">
+        <div className="search-wrapper">
+          <Search size={18} className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search monitors by name or URL..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+        </div>
+        <div className="status-filters">
+          <button
+            className={`filter-btn ${statusFilter === "all" ? "active" : ""}`}
+            onClick={() => setStatusFilter("all")}
+          >
+            All
+          </button>
+          <button
+            className={`filter-btn ${statusFilter === "online" ? "active" : ""}`}
+            onClick={() => setStatusFilter("online")}
+          >
+            Online
+          </button>
+          <button
+            className={`filter-btn ${statusFilter === "offline" ? "active" : ""}`}
+            onClick={() => setStatusFilter("offline")}
+          >
+            Offline
+          </button>
+        </div>
+      </div>
+
       <div className="monitor-list-grid">
-        {monitors.length === 0 ? (
-          <p className="empty-state">No monitors registered yet. Add one above!</p>
+        {filteredMonitors.length === 0 ? (
+          <p className="empty-state">
+            {searchTerm || statusFilter !== "all" 
+              ? "No monitors match your search/filter." 
+              : "No monitors registered yet. Add one above!"}
+          </p>
         ) : (
-          monitors.map((m) => {
+          filteredMonitors.map((m) => {
             const statusInfo = getStatusInfo(m.last_status);
+            const isOffline = m.last_status >= 500 || m.last_status === 0;
+            const animationClass = animatingIds[m.id] || "";
             return (
               <Card
                 key={m.id}
-                className={`monitor-card ${selectedMonitor?.id === m.id ? "selected" : ""}`}
+                className={`monitor-card ${selectedMonitor?.id === m.id ? "selected" : ""} ${isOffline ? "is-offline" : ""} ${animationClass}`}
                 onClick={() => handleSelect(m)}
               >
                 <div className="monitor-card-body">
@@ -167,16 +310,52 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
                             {m.last_response_time_ms}ms
                           </span>
                         )}
-                        <button
-                          className="delete-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(m.id);
-                          }}
-                          title="Delete monitor"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="card-actions">
+                          <button
+                            className="action-btn share"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (m.status_page_token) {
+                                window.open(`/status/${m.status_page_token}`, '_blank');
+                              } else {
+                                showToast("No public status token assigned yet.", "error");
+                              }
+                            }}
+                            title="Public Status Page"
+                          >
+                            <Share2 size={16} />
+                          </button>
+                          <button
+                            className="action-btn view"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelect(m);
+                            }}
+                            title="View details"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            className="action-btn edit"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              alert("Edit functionality coming soon!");
+                            }}
+                            title="Edit monitor"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            className="action-btn delete"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(m.id);
+                            }}
+                            title="Delete monitor"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                     <p className="monitor-url">{m.url}</p>
@@ -225,6 +404,7 @@ export function MonitorList({ refreshKey }: MonitorListProps) {
             {stats ? (
               <div className="chart-wrapper">
                 <MonitorChart data={stats.recent_checks} />
+                <Heatmap data={stats.heatmap} />
               </div>
             ) : (
               <div className="loading-stats">Loading stats...</div>

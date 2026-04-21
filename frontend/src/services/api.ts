@@ -118,10 +118,17 @@ export async function resetPassword(token: string, password: string) {
 }
 
 // Monitors
-export async function createMonitor(name: string, url: string, intervalMinutes: number = 5) {
+export async function createMonitor(name: string, url: string, intervalMinutes: number = 5, webhookUrl?: string, method: string = "GET", expectedStatusCode?: number | null) {
   return request<{ monitor: any }>("/monitors", {
     method: "POST",
-    body: JSON.stringify({ name, url, interval_minutes: intervalMinutes }),
+    body: JSON.stringify({ name, url, interval_minutes: intervalMinutes, webhook_url: webhookUrl, method, expected_status_code: expectedStatusCode }),
+  });
+}
+
+export async function updateMonitor(id: string, name: string, url: string, intervalMinutes: number = 5, webhookUrl?: string, method: string = "GET", expectedStatusCode?: number | null) {
+  return request<{ monitor: any }>(`/monitors/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({ name, url, interval_minutes: intervalMinutes, webhook_url: webhookUrl, method, expected_status_code: expectedStatusCode }),
   });
 }
 
@@ -131,14 +138,39 @@ export async function listMonitors() {
   });
 }
 
-export async function deleteMonitor(id: string) {
-  return request<void>(`/monitors/${id}`, {
+export async function deleteMonitor(id: string, keepIncidents: boolean = true) {
+  return request<void>(`/monitors/${id}?keepIncidents=${keepIncidents}`, {
     method: "DELETE",
   });
 }
 
+export async function getRecentIncidents() {
+  return request<{ incidents: any[] }>("/monitors/all/incidents", {
+    method: "GET",
+  });
+}
+
 export async function getMonitorStats(id: string) {
-  return request<{ uptime_24h: number; recent_checks: any[] }>(`/monitors/${id}/stats`, {
+  return request<{ uptime_24h: number; recent_checks: any[]; heatmap?: any[] }>(`/monitors/${id}/stats`, {
+    method: "GET",
+  });
+}
+
+export async function getPublicStatus(token: string) {
+  return request<any>(`/public/status/${token}`, {
+    method: "GET",
+  });
+}
+
+// Metrics
+export async function getMetricsOverview() {
+  return request<any[]>("/metrics/overview", {
+    method: "GET",
+  });
+}
+
+export async function getAggregatedMetrics(monitorId: string, range: '1h' | '24h' | '7d') {
+  return request<any[]>(`/metrics/${monitorId}?range=${range}`, {
     method: "GET",
   });
 }

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/auth";
+import { authenticate } from "../middleware/auth.middleware";
 import { MonitorController } from "../controllers/monitor.controller";
 
 const router = Router();
@@ -8,6 +8,7 @@ router.use(authenticate);
 
 router.post("/", MonitorController.create);
 router.get("/", MonitorController.list);
+router.get("/all/incidents", MonitorController.getRecentIncidents);
 router.get("/:id", MonitorController.getById);
 router.put("/:id", MonitorController.update);
 router.delete("/:id", MonitorController.delete);

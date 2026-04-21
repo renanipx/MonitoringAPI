@@ -20,7 +20,7 @@ export const sendPasswordResetEmail = async (email: string, resetToken: string) 
   const resetUrl = `${baseUrl}/?resetToken=${resetToken}`;
 
   const mailOptions = {
-    from: `"Chronoly" <${env.emailUser}>`,
+    from: `"Watchdog" <${env.emailUser}>`,
     to: email,
     subject: "Password Reset Request",
     html: `

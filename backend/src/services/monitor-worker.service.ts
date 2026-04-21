@@ -3,6 +3,7 @@ import { pool } from "../config/database";
 
 export class MonitorWorkerService {
   private static isRunning = false;
+  private static isProcessing = false;
   private static interval: NodeJS.Timeout | null = null;
 
   static start(intervalMs: number = 60000) { // Default check every 1 minute
@@ -23,9 +24,12 @@ export class MonitorWorkerService {
   }
 
   private static async runChecks() {
+    if (this.isProcessing) {
+      console.log('Worker: Skipped run because previous check is still processing.');
+      return;
+    }
+    this.isProcessing = true;
     try {
-      // Find monitors that need checking
-      // (last_check_at is null OR last_check_at + interval_minutes < NOW)
       const query = `
         SELECT * FROM monitors 
         WHERE is_active = true 
@@ -41,60 +45,118 @@ export class MonitorWorkerService {
         console.log(`Worker: Performing ${monitors.length} monitor checks...`);
       }
 
-      await Promise.all(monitors.map(monitor => this.checkMonitor(monitor)));
+      await Promise.allSettled(monitors.map((monitor: any) => this.checkMonitor(monitor)));
     } catch (error) {
       console.error("Worker error during runChecks:", error);
+    } finally {
+      this.isProcessing = false;
     }
   }
 
-  private static async checkMonitor(monitor: any) {
+  private static async ping(url: string, method: string = "GET", expectedStatusCode: number | null = null) {
     const start = Date.now();
-    let statusCode: number | null = null;
-    let responseTimeMs: number | null = null;
-    let isUp = false;
-    let errorMessage: string | null = null;
-
     try {
-      const response = await axios.get(monitor.url, {
-        timeout: 10000, // 10s timeout
-        validateStatus: () => true, // Don't throw for 4xx/5xx
+      const response = await axios({
+        url,
+        method: (method || "GET").toUpperCase(),
+        timeout: 10000,
+        validateStatus: () => true,
       });
-      statusCode = response.status;
-      responseTimeMs = Date.now() - start;
-      isUp = statusCode >= 200 && statusCode < 300;
+
+      let isUp = false;
+      if (expectedStatusCode) {
+        isUp = response.status === expectedStatusCode;
+      } else {
+        isUp = response.status >= 200 && response.status < 300;
+      }
+
+      return {
+        statusCode: response.status,
+        responseTimeMs: Date.now() - start,
+        isUp,
+        errorMessage: null
+      };
     } catch (error: any) {
-      responseTimeMs = Date.now() - start;
-      isUp = false;
+      let errorMessage = error.message;
+      let statusCode = 0;
       if (error.response) {
         statusCode = error.response.status;
       } else if (error.code === "ECONNABORTED") {
         errorMessage = "Timeout (10s)";
-        statusCode = 0;
-      } else {
-        errorMessage = error.message;
-        statusCode = 0;
       }
+      return {
+        statusCode,
+        responseTimeMs: Date.now() - start,
+        isUp: false,
+        errorMessage
+      };
+    }
+  }
+
+  private static async checkMonitor(monitor: any) {
+    let result = await this.ping(monitor.url, monitor.method, monitor.expected_status_code);
+
+    // Double-Check Logic
+    if (!result.isUp) {
+      console.log(`Worker: Monitor ${monitor.name} failed (${result.errorMessage || result.statusCode}). Double-checking in 3s...`);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      const retryResult = await this.ping(monitor.url, monitor.method, monitor.expected_status_code);
+      result = retryResult;
     }
 
-    // Save check results
     try {
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
 
+        // Evaluate accurate previous state from database before inserting new
+        const prevCheckRes = await client.query(
+          `SELECT is_up FROM monitor_checks WHERE monitor_id = $1 ORDER BY checked_at DESC LIMIT 1`,
+          [monitor.id]
+        );
+        const previousStatus = (prevCheckRes.rowCount || 0) > 0 ? prevCheckRes.rows[0].is_up : null;
+
         // Insert check
         await client.query(
           `INSERT INTO monitor_checks (monitor_id, status_code, response_time_ms, is_up, error_message) 
            VALUES ($1, $2, $3, $4, $5)`,
-          [monitor.id, statusCode, responseTimeMs, isUp, errorMessage]
+          [monitor.id, result.statusCode, result.responseTimeMs, result.isUp, result.errorMessage]
         );
+
+        // Incident Logic: Down (Only on critical failures, >= 400 or timeout)
+        const isCriticalFailure = result.statusCode >= 400 || result.statusCode === 0;
+        if (!result.isUp && (previousStatus === true || previousStatus === null) && isCriticalFailure) {
+          const activeIncidents = await client.query(`SELECT id FROM incidents WHERE monitor_id = $1 AND resolved_at IS NULL`, [monitor.id]);
+          if (activeIncidents.rowCount === 0) {
+            await client.query(
+              `INSERT INTO incidents (monitor_id, started_at, error_details) VALUES ($1, NOW(), $2)`,
+              [monitor.id, result.errorMessage || `HTTP ${result.statusCode}`]
+            );
+            if (monitor.webhook_url) {
+              await this.fireWebhook(monitor.webhook_url, monitor.name, false, result.errorMessage || `HTTP ${result.statusCode}`);
+            }
+          }
+        }
+        // Incident Logic: Up (Resolve any active incident if monitor is back UP)
+        else if (result.isUp) {
+          const activeIncidents = await client.query(`SELECT id FROM incidents WHERE monitor_id = $1 AND resolved_at IS NULL`, [monitor.id]);
+          if ((activeIncidents.rowCount || 0) > 0) {
+            await client.query(
+              `UPDATE incidents SET resolved_at = NOW() WHERE id = $1`,
+              [activeIncidents.rows[0].id]
+            );
+            if (monitor.webhook_url) {
+              await this.fireWebhook(monitor.webhook_url, monitor.name, true);
+            }
+          }
+        }
 
         // Update monitor status
         await client.query(
           `UPDATE monitors 
            SET last_status = $1, last_check_at = NOW(), last_response_time_ms = $2 
            WHERE id = $3`,
-          [statusCode, responseTimeMs, monitor.id]
+          [result.statusCode, result.responseTimeMs, monitor.id]
         );
 
         await client.query("COMMIT");
@@ -106,6 +168,28 @@ export class MonitorWorkerService {
       }
     } catch (err) {
       console.error(`Worker error saving check for monitor ${monitor.id}:`, err);
+    }
+  }
+
+  private static async fireWebhook(url: string, monitorName: string, isUp: boolean, errorDetails?: string) {
+    try {
+      const color = isUp ? 3066993 : 15158332;
+      const title = isUp ? `✅ ${monitorName} is back UP` : `🚨 ${monitorName} is DOWN`;
+      const description = isUp ? "Service has been restored." : `Error: ${errorDetails}`;
+
+      const payload = {
+        username: "Watchdog Alerts",
+        embeds: [{
+          title,
+          description,
+          color,
+          timestamp: new Date().toISOString()
+        }]
+      };
+
+      await axios.post(url, payload, { timeout: 5000 });
+    } catch (err) {
+      console.error(`Failed to fire webhook for ${monitorName}:`, err);
     }
   }
 }

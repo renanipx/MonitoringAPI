@@ -4,7 +4,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { type User, type AuthResponse } from "./types/auth";
 import { currentUser, logout } from "./services/api";
 import AuthPage from "./pages/AuthPage";
-import DashboardPage from "./pages/DashboardPage";
+import MainDashboardPage from "./pages/MainDashboardPage";
+import PublicStatusPage from "./pages/PublicStatusPage";
+import { ToastProvider } from "./components/ui/Toast";
 
 type AuthUser = User;
 
@@ -30,30 +32,33 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            user ? (
-              <Navigate to="/dashboard" replace />
-            ) : (
-              <AuthPage onAuthSuccess={handleAuthSuccess} />
-            )
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            user ? (
-              <DashboardPage user={user} onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+    <ToastProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              user ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <AuthPage onAuthSuccess={handleAuthSuccess} />
+              )
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              user ? (
+                <MainDashboardPage user={user} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          <Route path="/status/:token" element={<PublicStatusPage />} />
+        </Routes>
+      </BrowserRouter>
+    </ToastProvider>
   );
 }
 

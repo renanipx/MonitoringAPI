@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Modal, ModalActions } from "../ui/Modal";
 import { resetPassword } from "../../services/api";
+import { Button } from "../ui/Button";
 
 interface ResetPasswordModalProps {
   isOpen: boolean;
@@ -82,9 +83,9 @@ export function ResetPasswordModal({
           <button type="button" onClick={onClose}>
             Cancel
           </button>
-          <button type="submit" disabled={loading}>
-            {loading ? "Saving..." : "Save new password"}
-          </button>
+          <Button type="submit" loading={loading} className="submit-btn-glow submit-btn-auth">
+            Save new password
+          </Button>
         </ModalActions>
       </form>
     </Modal>
